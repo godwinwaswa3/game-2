@@ -1,0 +1,121 @@
+
+USE peanut_game;
+
+CREATE TABLE IF NOT EXISTS player_stats (
+  player_id CHAR(36) PRIMARY KEY,
+  level INT NOT NULL DEFAULT 1,
+  xp INT NOT NULL DEFAULT 0,
+  high_score INT NOT NULL DEFAULT 0,
+  games_played INT NOT NULL DEFAULT 0,
+  games_won INT NOT NULL DEFAULT 0,
+  best_combo INT NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (player_id) REFERENCES players(id)
+);
+
+CREATE TABLE IF NOT EXISTS player_achievements (
+  player_id CHAR(36) NOT NULL,
+  achievement_key VARCHAR(64) NOT NULL,
+  unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(player_id, achievement_key),
+  FOREIGN KEY(player_id) REFERENCES players(id)
+);
+
+CREATE TABLE IF NOT EXISTS player_powerups (
+  player_id CHAR(36) NOT NULL,
+  powerup_key VARCHAR(32) NOT NULL,
+  quantity INT NOT NULL DEFAULT 0,
+  PRIMARY KEY(player_id,powerup_key),
+  FOREIGN KEY(player_id) REFERENCES players(id)
+);
+
+CREATE TABLE IF NOT EXISTS daily_challenges (
+  challenge_date DATE PRIMARY KEY,
+  challenge_key VARCHAR(64) NOT NULL,
+  target INT NOT NULL,
+  reward INT NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS challenge_progress (
+  player_id CHAR(36) NOT NULL,
+  challenge_date DATE NOT NULL,
+  progress INT NOT NULL DEFAULT 0,
+  completed TINYINT(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY(player_id,challenge_date),
+  FOREIGN KEY(player_id) REFERENCES players(id)
+);
+
+CREATE TABLE IF NOT EXISTS leaderboard_scores (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  player_id CHAR(36) NOT NULL,
+  season_key VARCHAR(32) NOT NULL,
+  score INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_season_score(season_key,score),
+  FOREIGN KEY(player_id) REFERENCES players(id)
+);
+
+CREATE TABLE IF NOT EXISTS friends (
+  player_id CHAR(36) NOT NULL,
+  friend_id CHAR(36) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(player_id,friend_id),
+  FOREIGN KEY(player_id) REFERENCES players(id),
+  FOREIGN KEY(friend_id) REFERENCES players(id)
+);
+
+CREATE TABLE IF NOT EXISTS player_challenges (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  challenger_id CHAR(36) NOT NULL,
+  opponent_id CHAR(36) NOT NULL,
+  status VARCHAR(16) NOT NULL DEFAULT 'pending',
+  challenger_score INT NOT NULL DEFAULT 0,
+  opponent_score INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(challenger_id) REFERENCES players(id),
+  FOREIGN KEY(opponent_id) REFERENCES players(id)
+);
+
+-- Database is the source of truth for the Peanut Unit economy.
+CREATE TABLE IF NOT EXISTS economy_config (
+  id TINYINT UNSIGNED PRIMARY KEY,
+  initial_balance DECIMAL(20,8) NOT NULL,
+  interest_rate DECIMAL(12,8) NOT NULL,
+  compound_seconds INT UNSIGNED NOT NULL,
+  plot_interval_seconds INT UNSIGNED NOT NULL,
+  duration_seconds INT UNSIGNED NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT INTO economy_config
+  (id, initial_balance, interest_rate, compound_seconds, plot_interval_seconds, duration_seconds)
+VALUES
+  (1, 5.00000000, 0.15000000, 60, 5, 30)
+ON DUPLICATE KEY UPDATE
+  initial_balance = VALUES(initial_balance),
+  interest_rate = VALUES(interest_rate),
+  compound_seconds = VALUES(compound_seconds),
+  plot_interval_seconds = VALUES(plot_interval_seconds),
+  duration_seconds = VALUES(duration_seconds);
+
+CREATE TABLE IF NOT EXISTS economy_sessions (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  player_id CHAR(36) NOT NULL,
+  started_at DATETIME(6) NOT NULL,
+  ended_at DATETIME(6) NULL,
+  base_balance DECIMAL(20,8) NOT NULL,
+  final_balance DECIMAL(20,8) NULL,
+  status VARCHAR(16) NOT NULL DEFAULT 'active',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_economy_player_started(player_id, started_at),
+  FOREIGN KEY(player_id) REFERENCES players(id)
+);
+
+CREATE TABLE IF NOT EXISTS economy_snapshots (
+  session_id BIGINT UNSIGNED NOT NULL,
+  elapsed_seconds INT UNSIGNED NOT NULL,
+  amount DECIMAL(20,8) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(session_id, elapsed_seconds),
+  FOREIGN KEY(session_id) REFERENCES economy_sessions(id) ON DELETE CASCADE
+);

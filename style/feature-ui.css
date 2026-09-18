@@ -1,0 +1,82 @@
+/* =========================================================
+   DRISSNOW FEATURE / COMPOUND ECONOMY UI
+   ========================================================= */
+
+.drissnow-features {
+  width: 100%;
+  max-width: 500px;
+  margin: 20px auto;
+  box-sizing: border-box;
+}
+
+.economy-watch {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 18px;
+  border-radius: 12px;
+  background: #faf8ef;
+  border: 1px solid #d8d4c5;
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: center;
+}
+
+.economy-watch > strong {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.economy-watch > div {
+  margin: 7px 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.economy-watch span { font-weight: bold; }
+
+.economy-units {
+  display: inline-block;
+  min-width: 110px;
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.economy-countdown { font-variant-numeric: tabular-nums; }
+
+.economy-final {
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.economy-chart {
+  display: block;
+  width: 100%;
+  height: 180px;
+  margin-top: 18px;
+  box-sizing: border-box;
+  border: 1px solid #d8d4c5;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+@media screen and (max-width: 520px) {
+  .drissnow-features {
+    width: calc(100% - 20px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .economy-watch { padding: 15px; }
+  .economy-watch > strong { font-size: 18px; }
+  .economy-units { font-size: 22px; }
+  .economy-chart { height: 160px; }
+}
+
+@media screen and (max-width: 360px) {
+  .drissnow-features { width: calc(100% - 12px); }
+  .economy-watch { padding: 12px; }
+  .economy-watch > div { font-size: 14px; }
+  .economy-units { font-size: 20px; }
+  .economy-chart { height: 140px; }
+}

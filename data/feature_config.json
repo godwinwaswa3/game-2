@@ -1,0 +1,34 @@
+{
+  "powerups": {
+    "undo": 2,
+    "shuffle": 1,
+    "hammer": 1,
+    "double": 1
+  },
+  "themes": [
+    "classic",
+    "midnight",
+    "peanut"
+  ],
+  "defaultTheme": "classic",
+  "dailyChallenges": [
+    {
+      "key": "score",
+      "target": 1000,
+      "reward": 25,
+      "text": "Score 1,000 points"
+    },
+    {
+      "key": "moves",
+      "target": 50,
+      "reward": 25,
+      "text": "Make 50 moves"
+    },
+    {
+      "key": "tile",
+      "target": 128,
+      "reward": 50,
+      "text": "Reach a 128 tile"
+    }
+  ]
+}

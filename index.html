@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Drissnow - 2048</title>
+
+  <link href="style/main.css" rel="stylesheet" type="text/css">
+  <link href="style/feature-ui.css" rel="stylesheet" type="text/css">
+
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="meta/apple-touch-icon.png">
+  <link rel="apple-touch-startup-image" href="meta/apple-touch-startup-image-640x1096.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
+  <link rel="apple-touch-startup-image" href="meta/apple-touch-startup-image-640x920.png" media="(device-width: 320px) and (device-height: 480px) and (-webkit-device-pixel-ratio: 2)">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0, maximum-scale=1, user-scalable=no, minimal-ui">
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="heading">
+      <h1 class="title">Drissnow</h1>
+
+      <div class="scores-container">
+        <div class="score-container">0</div>
+        <div class="best-container">0</div>
+        <div class="credits-container">0</div>
+        <div class="timer-container">--:--</div>
+      </div>
+    </div>
+
+    <div class="above-game">
+      <p class="game-intro">
+        Join the numbers and get to the <strong>2048 tile!</strong>
+      </p>
+
+      <a class="restart-button">RESTART</a>
+    </div>
+
+    <div class="redeem-container">
+      <input
+        type="text"
+        class="redeem-input"
+        placeholder="Code from your peanut bag"
+      >
+
+      <a class="redeem-button">REDEEM</a>
+    </div>
+
+    <p class="redeem-message"></p>
+
+    <div class="timer-setup-container">
+      <label
+        for="timer-input"
+        class="timer-setup-label"
+      >
+        Round length (seconds):
+      </label>
+
+      <input
+        type="number"
+        id="timer-input"
+        class="timer-input"
+        min="1"
+        step="1"
+        placeholder="Loading..."
+      >
+    </div>
+
+    <div class="game-container">
+
+      <div class="game-over-banner">
+        <p class="game-over-text">
+          Game over! Tap RESTART above to play again.
+        </p>
+      </div>
+
+      <div class="no-credits-overlay">
+        <p class="no-credits-title">
+          You need a credit to play
+        </p>
+
+        <p class="no-credits-sub">
+          Buy a small (15/=) or big (40/=) bag of peanuts,
+          then enter the code printed on it above.
+        </p>
+      </div>
+
+      <div class="prize-toast">
+        <p class="prize-toast-text"></p>
+      </div>
+
+      <div class="grid-container">
+
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
+
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
+
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
+
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
+
+      </div>
+
+      <div class="tile-container"></div>
+
+    </div>
+
+    <!--
+      Feature UI host.
+      FeatureManager creates the Peanut Units economy panel
+      and economy_chart.js supplies the live chart.
+    -->
+    <div
+      id="drissnow-features"
+      class="drissnow-features"
+    ></div>
+
+    <p class="game-explanation">
+      <strong class="important">How to play:</strong>
+      Use your <strong>arrow keys</strong> to move the tiles.
+      When two tiles with the same number touch,
+      they <strong>merge into one!</strong>
+    </p>
+
+    <hr>
+
+    <p>
+      <strong class="important">Note:</strong>
+      This is the DrissNow implementation of the Game 2048.
+      Recreated by Godwin Waswa, a medical student at Moi
+      University, Eldoret, Kenya.
+    </p>
+
+    <hr>
+
+  </div>
+
+  <!-- =========================================================
+       CORE 2048 DEPENDENCIES
+       ========================================================= -->
+
+  <script src="js/bind_polyfill.js"></script>
+  <script src="js/classlist_polyfill.js"></script>
+  <script src="js/animframe_polyfill.js"></script>
+
+  <script src="js/keyboard_input_manager.js"></script>
+  <script src="js/html_actuator.js"></script>
+  <script src="js/grid.js"></script>
+  <script src="js/tile.js"></script>
+  <script src="js/local_storage_manager.js"></script>
+
+
+  <!-- =========================================================
+       PEANUT CREDITS
+       ========================================================= -->
+
+  <script src="js/json_data_manager.js"></script>
+
+  <script src="js/credits_manager.js"></script>
+
+
+  <!-- =========================================================
+       FEATURE MANAGER
+       ========================================================= -->
+
+  <script src="js/feature_manager.js"></script>
+
+
+  <!-- =========================================================
+       LIVE PEANUT UNITS ECONOMY + CHART
+
+       This is intentionally loaded AFTER feature_manager.js.
+
+       feature_manager.js contains the FeatureManager itself,
+       while economy_chart.js supplies the final
+       window.DrissnowCreditEconomy implementation used when
+       FeatureManager is instantiated.
+       ========================================================= -->
+
+  <script src="js/economy_chart.js"></script>
+
+
+  <!-- =========================================================
+       GAME MANAGER
+       ========================================================= -->
+
+  <script src="js/game_manager.js"></script>
+
+
+  <!-- =========================================================
+       APPLICATION BOOTSTRAP
+       ========================================================= -->
+
+  <script src="js/application.js"></script>
+
+</body>
+</html>

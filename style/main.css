@@ -1,0 +1,687 @@
+@import url(fonts/clear-sans.css);
+
+/* ===================== Base ===================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #faf8ef;
+  color: #776e65;
+  font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+  font-size: 18px;
+}
+
+body {
+  margin: clamp(20px, 5vw, 80px) 0;
+  padding: 0 16px;
+}
+
+.container {
+  width: min(500px, 100%);
+  margin: 0 auto;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: 10px;
+  line-height: 1.65;
+}
+
+a {
+  color: #776e65;
+  font-weight: bold;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+strong.important {
+  text-transform: uppercase;
+}
+
+hr {
+  border: none;
+  border-bottom: 1px solid #d8d4d0;
+  margin: 20px 0 30px;
+}
+
+/* ===================== Animations ===================== */
+
+@keyframes move-up {
+  0% {
+    top: 25px;
+    opacity: 1;
+  }
+
+  100% {
+    top: -50px;
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes appear {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0);
+  }
+
+  50% {
+    transform: scale(1.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ===================== Header & score HUD ===================== */
+
+.heading::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+h1.title {
+  display: block;
+  float: left;
+  margin: 0;
+  font-size: clamp(27px, 8vw, 80px);
+  font-weight: bold;
+}
+
+.scores-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+  max-width: 60%;
+  float: right;
+}
+
+.score-container,
+.best-container,
+.credits-container,
+.timer-container {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 56px;
+  margin-top: 8px;
+  padding: clamp(8px, 2.5vw, 12px) clamp(12px, 3.5vw, 22px);
+  border-radius: 3px;
+  color: #fff;
+  font-size: clamp(16px, 4vw, 25px);
+  font-weight: bold;
+  text-align: center;
+}
+
+.score-container,
+.best-container {
+  background: #bbada0;
+}
+
+.credits-container {
+  background: #4caf7d;
+}
+
+.timer-container {
+  background: #6b8fb5;
+}
+
+.timer-container.timer-low {
+  background: #c0392b;
+}
+
+.score-container::before,
+.best-container::before,
+.credits-container::before,
+.timer-container::before {
+  color: #eee4da;
+  font-size: 11px;
+  line-height: 13px;
+  text-transform: uppercase;
+}
+
+.score-container::before {
+  content: "Score";
+}
+
+.best-container::before {
+  content: "Best";
+}
+
+.credits-container::before {
+  content: "Credits";
+  color: #eafff2;
+}
+
+.timer-container::before {
+  content: "Time";
+  color: #e9f1fa;
+}
+
+.score-container .score-addition {
+  position: absolute;
+  right: 30px;
+  z-index: 100;
+  color: rgba(119, 110, 101, 0.9);
+  font-size: 25px;
+  line-height: 25px;
+  font-weight: bold;
+  animation: move-up 600ms ease-in;
+  animation-fill-mode: both;
+}
+
+/* ===================== Game controls ===================== */
+
+.above-game {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.game-intro {
+  flex: 1 1 auto;
+  margin: 0;
+  line-height: 1.65;
+}
+
+.restart-button {
+  display: inline-block;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 3px;
+  background: #8f7a66;
+  color: #f9f6f2;
+  line-height: 40px;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.redeem-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.redeem-input {
+  flex: 1 1 200px;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #d8d4d0;
+  border-radius: 3px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 16px;
+}
+
+.redeem-button {
+  display: inline-block;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 3px;
+  background: #4caf7d;
+  color: #f9f6f2;
+  line-height: 40px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.redeem-message {
+  min-height: 20px;
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.redeem-message.success {
+  color: #2e7d4f;
+}
+
+.redeem-message.error {
+  color: #c0392b;
+}
+
+.timer-setup-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.timer-setup-label {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.timer-input {
+  width: 80px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #d8d4d0;
+  border-radius: 3px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 15px;
+}
+
+.timer-input:disabled {
+  background: #eee4da;
+  color: #a89f96;
+  cursor: not-allowed;
+}
+
+/* ===================== Game board ===================== */
+
+.game-container {
+  position: relative;
+  width: 100%;
+  min-height: 200px;
+  margin-top: clamp(17px, 4vw, 40px);
+  padding: clamp(8px, 3vw, 15px);
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  background: #bbada0;
+  cursor: default;
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -ms-touch-callout: none;
+}
+
+.grid-container {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 3%;
+}
+
+.grid-row {
+  display: contents;
+}
+
+.grid-cell {
+  border-radius: 3px;
+  background: rgba(238, 228, 218, 0.35);
+}
+
+.tile-container {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+/* Keep tile geometry locked to the 4x4 grid.
+   The grid uses a 3% gap, so each cell is 22.75% wide/high and
+   successive cells begin 25.75% apart. */
+.tile {
+  position: absolute;
+  width: 22.75%;
+  height: 22.75%;
+  transition: left 100ms ease-in-out, top 100ms ease-in-out;
+}
+
+.tile-position-1-1 { left: 0%; top: 0%; }
+.tile-position-2-1 { left: 25.75%; top: 0%; }
+.tile-position-3-1 { left: 51.5%; top: 0%; }
+.tile-position-4-1 { left: 77.25%; top: 0%; }
+
+.tile-position-1-2 { left: 0%; top: 25.75%; }
+.tile-position-2-2 { left: 25.75%; top: 25.75%; }
+.tile-position-3-2 { left: 51.5%; top: 25.75%; }
+.tile-position-4-2 { left: 77.25%; top: 25.75%; }
+
+.tile-position-1-3 { left: 0%; top: 51.5%; }
+.tile-position-2-3 { left: 25.75%; top: 51.5%; }
+.tile-position-3-3 { left: 51.5%; top: 51.5%; }
+.tile-position-4-3 { left: 77.25%; top: 51.5%; }
+
+.tile-position-1-4 { left: 0%; top: 77.25%; }
+.tile-position-2-4 { left: 25.75%; top: 77.25%; }
+.tile-position-3-4 { left: 51.5%; top: 77.25%; }
+.tile-position-4-4 { left: 77.25%; top: 77.25%; }
+
+.tile .tile-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  background: #eee4da;
+  z-index: 10;
+  text-align: center;
+  font-size: clamp(16px, 9.5vw, 55px);
+  font-weight: bold;
+}
+
+.tile.tile-2 .tile-inner {
+  background: #eee4da;
+}
+
+.tile.tile-4 .tile-inner {
+  background: #ede0c8;
+}
+
+.tile.tile-8 .tile-inner {
+  color: #f9f6f2;
+  background: #f2b179;
+}
+
+.tile.tile-16 .tile-inner {
+  color: #f9f6f2;
+  background: #f59563;
+}
+
+.tile.tile-32 .tile-inner {
+  color: #f9f6f2;
+  background: #f67c5f;
+}
+
+.tile.tile-64 .tile-inner {
+  color: #f9f6f2;
+  background: #f65e3b;
+}
+
+.tile.tile-128 .tile-inner,
+.tile.tile-256 .tile-inner,
+.tile.tile-512 .tile-inner,
+.tile.tile-1024 .tile-inner,
+.tile.tile-2048 .tile-inner {
+  color: #f9f6f2;
+}
+
+.tile.tile-128 .tile-inner {
+  background: #edcf72;
+  box-shadow:
+    0 0 30px 10px rgba(243, 215, 116, 0.2381),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14286);
+  font-size: clamp(14px, 7.5vw, 45px);
+}
+
+.tile.tile-256 .tile-inner {
+  background: #edcc61;
+  box-shadow:
+    0 0 30px 10px rgba(243, 215, 116, 0.31746),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.19048);
+  font-size: clamp(14px, 7.5vw, 45px);
+}
+
+.tile.tile-512 .tile-inner {
+  background: #edc850;
+  box-shadow:
+    0 0 30px 10px rgba(243, 215, 116, 0.39683),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2381);
+  font-size: clamp(14px, 7.5vw, 45px);
+}
+
+.tile.tile-1024 .tile-inner {
+  background: #edc53f;
+  box-shadow:
+    0 0 30px 10px rgba(243, 215, 116, 0.47619),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28571);
+  font-size: clamp(12px, 6vw, 35px);
+}
+
+.tile.tile-2048 .tile-inner {
+  background: #edc22e;
+  box-shadow:
+    0 0 30px 10px rgba(243, 215, 116, 0.55556),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.33333);
+  font-size: clamp(12px, 6vw, 35px);
+}
+
+.tile.tile-super .tile-inner {
+  color: #f9f6f2;
+  background: #3c3a32;
+  font-size: clamp(10px, 5vw, 30px);
+}
+
+.tile-new .tile-inner {
+  animation: appear 200ms ease 100ms;
+  animation-fill-mode: backwards;
+}
+
+.tile-merged .tile-inner {
+  z-index: 20;
+  animation: pop 200ms ease 100ms;
+  animation-fill-mode: backwards;
+}
+
+/* ===================== Game overlays ===================== */
+
+.game-over-banner {
+  position: absolute;
+  inset: 0;
+  z-index: 130;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  border-radius: 6px;
+  background: rgba(238, 228, 218, 0.75);
+  opacity: 0;
+  pointer-events: none;
+  text-align: center;
+  transition: opacity 300ms ease;
+}
+
+.game-over-banner.game-over-visible {
+  opacity: 1;
+}
+
+.game-over-banner p {
+  margin: 0;
+  font-size: clamp(18px, 5.5vw, 30px);
+  font-weight: bold;
+}
+
+.no-credits-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 110;
+  display: none;
+  padding: clamp(20px, 6vw, 30px);
+  border-radius: 6px;
+  background: rgba(238, 228, 218, 0.96);
+  text-align: center;
+}
+
+.no-credits-overlay.no-credits-visible {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.no-credits-title {
+  margin: 0 0 10px;
+  font-size: clamp(18px, 5vw, 26px);
+  font-weight: bold;
+}
+
+.no-credits-sub {
+  margin: 0;
+  font-size: clamp(13px, 3.5vw, 16px);
+  line-height: 1.5;
+}
+
+.prize-toast {
+  position: absolute;
+  top: clamp(10px, 3vw, 20px);
+  left: 50%;
+  z-index: 120;
+  display: none;
+  max-width: 90%;
+  padding: 10px 18px;
+  border-radius: 6px;
+  background: rgba(237, 194, 46, 0.97);
+  color: #f9f6f2;
+  text-align: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 250ms ease;
+}
+
+.prize-toast.prize-toast-visible {
+  display: block;
+  opacity: 1;
+}
+
+.prize-toast-text {
+  margin: 0;
+  font-size: clamp(13px, 3.5vw, 16px);
+  font-weight: bold;
+}
+
+/* ===================== Feature UI ===================== */
+
+.drissnow-features {
+  box-sizing: border-box;
+  margin: 10px 0 14px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #eee;
+  font-size: 14px;
+}
+
+.feature-hud {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.feature-hud span {
+  padding: 5px 8px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.feature-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.feature-buttons button,
+.df-themes button {
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.feature-panel {
+  margin-top: 8px;
+}
+
+.feature-panel summary {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.df-themes {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* ===================== Economy UI ===================== */
+
+.drissnow-credit-economy {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.economy-chart {
+  display: block;
+  width: 100%;
+  height: 180px;
+  margin-top: 10px;
+}
+
+.drissnow-credit-economy .economy-watch {
+  font-variant-numeric: tabular-nums;
+  font-family: monospace;
+  font-size: 1.35em;
+  letter-spacing: 0.04em;
+}
+
+/* ===================== Themes & responsive ===================== */
+
+body[data-drissnow-theme="midnight"] {
+  background: #111;
+  color: #eee;
+}
+
+body[data-drissnow-theme="midnight"] .drissnow-features {
+  background: #222;
+}
+
+body[data-drissnow-theme="peanut"] {
+  background: #fff4d6;
+}
+
+body[data-drissnow-theme="peanut"] .drissnow-features {
+  background: #f4d59a;
+}
+
+@media (max-width: 520px) {
+  .feature-hud span {
+    flex: 1;
+    text-align: center;
+  }
+
+  .feature-buttons button {
+    flex: 1;
+    min-width: 42%;
+  }
+}
+
+.game-explanation {
+  margin-top: 50px;
+}
