@@ -179,7 +179,9 @@
   "use strict";
 
   window.DrissnowAuth = window.DrissnowAuth || {
-    API_BASE: "http://127.0.0.1:3000/api/auth",
+    API_BASE: (window.location.protocol === "http:" || window.location.protocol === "https:")
+      ? window.location.origin + "/api/auth"
+      : "http://127.0.0.1:3000/api/auth",
     TOKEN_KEY: "drissnowAuthToken",
     USER_KEY: "drissnowUser",
 
