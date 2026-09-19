@@ -34,6 +34,18 @@
       </div>
     </div>
 
+    <div
+      id="drissnow-auth-bar"
+      style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin:8px 0 12px;font-size:13px;"
+    >
+      <span id="drissnow-auth-status">Checking account...</span>
+      <a
+        id="drissnow-auth-action"
+        href="signin.html"
+        style="text-decoration:none;font-weight:bold;"
+      >SIGN IN</a>
+    </div>
+
     <div class="above-game">
       <p class="game-intro">
         Join the numbers and get to the <strong>2048 tile!</strong>
@@ -161,6 +173,71 @@
 
   </div>
 
+
+<script>
+(function (window) {
+  "use strict";
+
+  window.DrissnowAuth = window.DrissnowAuth || {
+    API_BASE: "http://127.0.0.1:3000/api/auth",
+    TOKEN_KEY: "drissnowAuthToken",
+    USER_KEY: "drissnowUser",
+
+    getToken: function () {
+      return localStorage.getItem(this.TOKEN_KEY);
+    },
+
+    getUser: function () {
+      try {
+        return JSON.parse(localStorage.getItem(this.USER_KEY) || "null");
+      } catch (error) {
+        return null;
+      }
+    },
+
+    isSignedIn: function () {
+      return !!(this.getToken() && this.getUser());
+    },
+
+    setSession: function (token, user) {
+      if (token) localStorage.setItem(this.TOKEN_KEY, token);
+      if (user) localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    },
+
+    clearSession: function () {
+      localStorage.removeItem(this.TOKEN_KEY);
+      localStorage.removeItem(this.USER_KEY);
+    },
+
+    authHeaders: function (json) {
+      var headers = {};
+      var token = this.getToken();
+      if (json) headers["Content-Type"] = "application/json";
+      if (token) headers["Authorization"] = "Bearer " + token;
+      return headers;
+    },
+
+    signOut: async function () {
+      var token = this.getToken();
+      try {
+        if (token) {
+          await fetch(this.API_BASE + "/signout", {
+            method: "POST",
+            headers: this.authHeaders(false)
+          });
+        }
+      } catch (error) {
+        console.warn("Signout request failed:", error);
+      } finally {
+        this.clearSession();
+      }
+    }
+  };
+
+  window.DrissnowAuth.ready = true;
+})(window);
+</script>
+
   <!-- =========================================================
        CORE 2048 DEPENDENCIES
        ========================================================= -->
@@ -218,6 +295,43 @@
        ========================================================= -->
 
   <script src="js/application.js"></script>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var status = document.getElementById("drissnow-auth-status");
+      var action = document.getElementById("drissnow-auth-action");
+      var auth = window.DrissnowAuth;
+
+      if (!status || !action || !auth) return;
+
+      function renderAuth() {
+        var user = auth.getUser();
+
+        if (auth.isSignedIn()) {
+          status.textContent = user.email || "Signed in";
+          action.textContent = "ACCOUNT";
+          action.href = "account.html";
+        } else {
+          status.textContent = "Not signed in";
+          action.textContent = "SIGN IN";
+          action.href = "signin.html";
+        }
+      }
+
+      renderAuth();
+
+      window.addEventListener("storage", function (event) {
+        if (
+          event.key === auth.TOKEN_KEY ||
+          event.key === auth.USER_KEY
+        ) {
+          renderAuth();
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

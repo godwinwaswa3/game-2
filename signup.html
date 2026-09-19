@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Sign Up - DrissNow</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+    }
+
+    .container {
+      width: min(92%, 420px);
+      padding: 30px;
+      border-radius: 18px;
+      background: #1d1d1d;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    h1 {
+      margin-top: 0;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #aaa;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      margin-bottom: 16px;
+      border: 1px solid #444;
+      border-radius: 10px;
+      background: #111;
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #f5c542;
+    }
+
+    button {
+      width: 100%;
+      padding: 13px;
+      border: 0;
+      border-radius: 10px;
+      background: #f5c542;
+      color: #111;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button.secondary {
+      background: #333;
+      color: #fff;
+    }
+
+    #message {
+      min-height: 22px;
+      margin: 12px 0;
+      text-align: center;
+      color: #ff7777;
+    }
+
+    .links {
+      margin-top: 18px;
+      text-align: center;
+    }
+
+    .links a {
+      color: #f5c542;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="container">
+
+    <h1>Create Account</h1>
+
+    <p class="subtitle">
+      Join DrissNow and start playing.
+    </p>
+
+    <form id="signupForm">
+
+      <label for="email">Email</label>
+
+      <input
+        id="email"
+        name="email"
+        type="email"
+        placeholder="you@example.com"
+        autocomplete="email"
+        required
+      >
+
+      <label for="password">Password</label>
+
+      <input
+        id="password"
+        name="password"
+        type="password"
+        placeholder="At least 8 characters"
+        autocomplete="new-password"
+        minlength="8"
+        required
+      >
+
+      <label for="confirmPassword">
+        Confirm Password
+      </label>
+
+      <input
+        id="confirmPassword"
+        name="confirmPassword"
+        type="password"
+        placeholder="Repeat your password"
+        autocomplete="new-password"
+        minlength="8"
+        required
+      >
+
+      <div id="message"></div>
+
+      <button type="submit">
+        Sign Up
+      </button>
+
+    </form>
+
+    <button
+      type="button"
+      class="secondary"
+      onclick="window.location.href='index.html'">
+      Back to Game
+    </button>
+
+    <div class="links">
+      Already have an account?
+      <a href="signin.html">Sign In</a>
+    </div>
+
+  </main>
+
+
+<script>
+(function (window) {
+  "use strict";
+
+  window.DrissnowAuth = window.DrissnowAuth || {
+    API_BASE: "http://127.0.0.1:3000/api/auth",
+    TOKEN_KEY: "drissnowAuthToken",
+    USER_KEY: "drissnowUser",
+
+    getToken: function () {
+      return localStorage.getItem(this.TOKEN_KEY);
+    },
+
+    getUser: function () {
+      try {
+        return JSON.parse(localStorage.getItem(this.USER_KEY) || "null");
+      } catch (error) {
+        return null;
+      }
+    },
+
+    isSignedIn: function () {
+      return !!(this.getToken() && this.getUser());
+    },
+
+    setSession: function (token, user) {
+      if (token) localStorage.setItem(this.TOKEN_KEY, token);
+      if (user) localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    },
+
+    clearSession: function () {
+      localStorage.removeItem(this.TOKEN_KEY);
+      localStorage.removeItem(this.USER_KEY);
+    },
+
+    authHeaders: function (json) {
+      var headers = {};
+      var token = this.getToken();
+      if (json) headers["Content-Type"] = "application/json";
+      if (token) headers["Authorization"] = "Bearer " + token;
+      return headers;
+    },
+
+    signOut: async function () {
+      var token = this.getToken();
+      try {
+        if (token) {
+          await fetch(this.API_BASE + "/signout", {
+            method: "POST",
+            headers: this.authHeaders(false)
+          });
+        }
+      } catch (error) {
+        console.warn("Signout request failed:", error);
+      } finally {
+        this.clearSession();
+      }
+    }
+  };
+
+  window.DrissnowAuth.ready = true;
+})(window);
+</script>
+
+  <script>
+    var API_BASE = window.DrissnowAuth.API_BASE;
+
+    var form =
+      document.getElementById("signupForm");
+
+    var message =
+      document.getElementById("message");
+
+    form.addEventListener(
+      "submit",
+      async function (event) {
+        event.preventDefault();
+
+        var email =
+          document.getElementById("email")
+            .value
+            .trim();
+
+        var password =
+          document.getElementById("password")
+            .value;
+
+        var confirmPassword =
+          document.getElementById("confirmPassword")
+            .value;
+
+        message.textContent = "";
+
+        if (password !== confirmPassword) {
+          message.textContent =
+            "Passwords do not match.";
+          return;
+        }
+
+        try {
+          var response =
+            await fetch(
+              API_BASE + "/signup",
+              {
+                method: "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json"
+                },
+
+                body: JSON.stringify({
+                  email: email,
+                  password: password
+                })
+              }
+            );
+
+          var data =
+            await response.json();
+
+          if (!response.ok || !data.success) {
+            message.textContent =
+              data.message ||
+              "Sign up failed.";
+            return;
+          }
+
+          /*
+           * Store the authenticated session.
+           */
+          window.DrissnowAuth.setSession(
+            data.token,
+            data.user
+          );
+
+          /*
+           * Authentication succeeded.
+           * Send the user to the game.
+           */
+          window.location.href =
+            "index.html";
+
+        } catch (error) {
+          console.error(error);
+
+          message.textContent =
+            "Unable to connect to the server.";
+        }
+      }
+    );
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+
+  <title>Drissnow - Account</title>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <link
+    href="style/main.css"
+    rel="stylesheet"
+    type="text/css"
+  >
+
+  <style>
+    body {
+      margin: 0;
+    }
+
+    .account-page {
+      width: 100%;
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .account-card {
+      background: #faf8ef;
+      color: #776e65;
+      border-radius: 8px;
+      padding: 25px;
+      box-sizing: border-box;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .account-page-title {
+      margin: 0 0 25px;
+      text-align: center;
+      font-size: 36px;
+    }
+
+    .account-detail {
+      padding: 15px 0;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .account-detail-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #999;
+    }
+
+    .account-detail-value {
+      display: block;
+      font-size: 16px;
+      word-break: break-word;
+    }
+
+    /*
+     * Peanut Credit balance
+     */
+    .balance-detail {
+      margin: 25px 0;
+      padding: 22px;
+      border-radius: 8px;
+      background: #edc53f;
+      color: #776e65;
+      text-align: center;
+    }
+
+    .balance-label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .balance-value {
+      display: block;
+      margin-top: 6px;
+      font-size: 40px;
+      line-height: 1;
+      font-weight: bold;
+    }
+
+    .balance-unit {
+      display: block;
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .account-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    .account-action {
+      flex: 1;
+      min-width: 0;
+      padding: 12px;
+      border: 0;
+      border-radius: 4px;
+      text-align: center;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+
+    .back-button {
+      background: #8f7a66;
+      color: #f9f6f2;
+    }
+
+    .signout-button {
+      background: #bbada0;
+      color: #fff;
+    }
+
+    .account-action:hover {
+      opacity: 0.85;
+    }
+
+    .account-action:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .account-message {
+      min-height: 20px;
+      margin: 20px 0 0;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .loading {
+      opacity: 0.7;
+    }
+
+    @media screen and (max-width: 520px) {
+
+      .account-page {
+        margin: 20px auto;
+        padding: 12px;
+      }
+
+      .account-card {
+        padding: 20px;
+      }
+
+      .account-page-title {
+        font-size: 30px;
+      }
+
+      .account-actions {
+        flex-direction: column;
+      }
+
+      .account-action {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="account-page">
+
+    <div class="account-card">
+
+      <h1 class="account-page-title">
+        Your Account
+      </h1>
+
+
+      <!-- EMAIL -->
+
+      <div class="account-detail">
+
+        <span class="account-detail-label">
+          Email
+        </span>
+
+        <span
+          id="account-email"
+          class="account-detail-value"
+        >
+          Loading...
+        </span>
+
+      </div>
+
+
+      <!-- PLAYER ID -->
+
+      <div class="account-detail">
+
+        <span class="account-detail-label">
+          Player ID
+        </span>
+
+        <span
+          id="account-player-id"
+          class="account-detail-value"
+        >
+          Loading...
+        </span>
+
+      </div>
+
+
+      <!-- CREDIT BALANCE -->
+
+      <div class="balance-detail">
+
+        <span class="balance-label">
+          Account Balance
+        </span>
+
+        <span
+          id="account-balance"
+          class="balance-value loading"
+        >
+          ...
+        </span>
+
+        <span class="balance-unit">
+          PEANUT CREDITS
+        </span>
+
+      </div>
+
+
+      <!-- ACTIONS -->
+
+      <div class="account-actions">
+
+        <a
+          href="index.html"
+          class="account-action back-button"
+        >
+          BACK TO GAME
+        </a>
+
+        <button
+          id="signout-button"
+          class="account-action signout-button"
+          type="button"
+        >
+          SIGN OUT
+        </button>
+
+      </div>
+
+
+      <p
+        id="account-message"
+        class="account-message"
+      ></p>
+
+    </div>
+
+  </div>
+
+
+  <!--
+    CreditsManager must be loaded before
+    the account JavaScript below.
+  -->
+  <script src="js/credits_manager.js"></script>
+
+<script>
+(function (window) {
+  "use strict";
+
+  window.DrissnowAuth = window.DrissnowAuth || {
+    API_BASE: "http://127.0.0.1:3000/api/auth",
+    TOKEN_KEY: "drissnowAuthToken",
+    USER_KEY: "drissnowUser",
+
+    getToken: function () {
+      return localStorage.getItem(this.TOKEN_KEY);
+    },
+
+    getUser: function () {
+      try {
+        return JSON.parse(localStorage.getItem(this.USER_KEY) || "null");
+      } catch (error) {
+        return null;
+      }
+    },
+
+    isSignedIn: function () {
+      return !!(this.getToken() && this.getUser());
+    },
+
+    setSession: function (token, user) {
+      if (token) localStorage.setItem(this.TOKEN_KEY, token);
+      if (user) localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    },
+
+    clearSession: function () {
+      localStorage.removeItem(this.TOKEN_KEY);
+      localStorage.removeItem(this.USER_KEY);
+    },
+
+    authHeaders: function (json) {
+      var headers = {};
+      var token = this.getToken();
+      if (json) headers["Content-Type"] = "application/json";
+      if (token) headers["Authorization"] = "Bearer " + token;
+      return headers;
+    },
+
+    signOut: async function () {
+      var token = this.getToken();
+      try {
+        if (token) {
+          await fetch(this.API_BASE + "/signout", {
+            method: "POST",
+            headers: this.authHeaders(false)
+          });
+        }
+      } catch (error) {
+        console.warn("Signout request failed:", error);
+      } finally {
+        this.clearSession();
+      }
+    }
+  };
+
+  window.DrissnowAuth.ready = true;
+})(window);
+</script>
+
+
+  <script>
+    (function () {
+
+      "use strict";
+
+
+      /*
+       * Local authentication information.
+       */
+
+      var token = window.DrissnowAuth.getToken();
+      var user = window.DrissnowAuth.getUser();
+
+
+      /*
+       * Page elements.
+       */
+
+      var emailElement =
+        document.getElementById(
+          "account-email"
+        );
+
+
+      var playerIdElement =
+        document.getElementById(
+          "account-player-id"
+        );
+
+
+      var balanceElement =
+        document.getElementById(
+          "account-balance"
+        );
+
+
+      var messageElement =
+        document.getElementById(
+          "account-message"
+        );
+
+
+      var signoutButton =
+        document.getElementById(
+          "signout-button"
+        );
+
+
+      /*
+       * User must be signed in.
+       */
+
+      if (!token || !user) {
+
+        window.location.href =
+          "signin.html";
+
+        return;
+
+      }
+
+
+      /*
+       * Display account information
+       * immediately from the signed-in
+       * user's session data.
+       */
+
+      emailElement.textContent =
+        user.email || "Unknown";
+
+
+      playerIdElement.textContent =
+        user.playerId || "Unknown";
+
+
+      /*
+       * Load the real balance.
+       *
+       * CreditsManager sends:
+       *
+       * {
+       *   path: "",
+       *   method: "GET",
+       *   token: "<session token>",
+       *   body: {}
+       * }
+       *
+       * to credits_curl_proxy.js.
+       */
+
+      var creditsManager =
+        new CreditsManager();
+
+
+      creditsManager
+        .getAccount()
+        .then(function (account) {
+
+          console.log(
+            "Account response:",
+            account
+          );
+
+
+          /*
+           * The Credits API account
+           * response contains "credits".
+           */
+
+          var balance =
+            Number(
+              account.credits
+            );
+
+
+          if (!isFinite(balance)) {
+
+            balance = 0;
+
+          }
+
+
+          balanceElement.classList.remove(
+            "loading"
+          );
+
+
+          balanceElement.textContent =
+            balance;
+
+
+          messageElement.textContent =
+            "";
+
+
+        })
+        .catch(function (error) {
+
+          console.error(
+            "Account balance error:",
+            error
+          );
+
+
+          balanceElement.classList.remove(
+            "loading"
+          );
+
+
+          balanceElement.textContent =
+            "—";
+
+
+          messageElement.textContent =
+            error.message ||
+            "Unable to load account balance.";
+
+
+          /*
+           * If authentication has failed,
+           * remove the invalid session and
+           * return to sign in.
+           */
+
+          var errorText =
+            String(
+              error.message || ""
+            ).toLowerCase();
+
+
+          if (
+            errorText.indexOf(
+              "authentication"
+            ) !== -1 ||
+            errorText.indexOf(
+              "session"
+            ) !== -1 ||
+            errorText.indexOf(
+              "sign in"
+            ) !== -1
+          ) {
+
+            window.DrissnowAuth.clearSession();
+
+
+            setTimeout(
+              function () {
+
+                window.location.href =
+                  "signin.html";
+
+              },
+              1000
+            );
+
+          }
+
+        });
+
+
+      /*
+       * SIGN OUT
+       */
+
+      signoutButton.addEventListener(
+        "click",
+        async function () {
+
+          signoutButton.disabled =
+            true;
+
+          signoutButton.textContent =
+            "SIGNING OUT...";
+
+
+
+          try {
+            await window.DrissnowAuth.signOut();
+          } catch (error) {
+            console.error(
+              "Signout failed:",
+              error
+            );
+            window.DrissnowAuth.clearSession();
+          }
+
+
+          /*
+           * Return to sign in.
+           */
+
+          window.location.href =
+            "signin.html";
+
+        }
+      );
+
+    })();
+  </script>
+
+</body>
+</html>
