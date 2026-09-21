@@ -221,8 +221,52 @@ GameManager.prototype.startTimer = async function (
 // exactly like the normal setup/start flow.
 // -------------------------------------------------
 GameManager.prototype.startRedeemedRound = async function (
+  startingAmount,
   durationSeconds
 ) {
+
+  var amount =
+  Number(startingAmount);
+
+var duration =
+  Number(durationSeconds);
+
+if (
+  !isFinite(amount) ||
+  amount <= 0
+) {
+  console.warn(
+    "Invalid redeemed-code amount:",
+    startingAmount
+  );
+
+  return this.setup();
+}
+
+if (
+  !isFinite(duration) ||
+  duration <= 0
+) {
+  console.warn(
+    "Invalid redeemed-code duration:",
+    durationSeconds
+  );
+
+  return this.setup();
+}
+
+amount =
+  Math.max(
+    1,
+    Math.round(amount)
+  );
+
+duration =
+  Math.max(
+    1,
+    Math.round(duration)
+  );
+  
   var duration =
     Number(durationSeconds);
 

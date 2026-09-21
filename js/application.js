@@ -64,48 +64,31 @@ if (result.success) {
    * The redemption API must return the intrinsic
    * duration_seconds from the codes table.
    */
-  var codeDuration =
-    Number(
-      result.durationSeconds
-    );
+var codeAmount = Number(result.amount);
 
-  if (
-    !isFinite(codeDuration) ||
-    codeDuration <= 0
-  ) {
+if (
+  !isFinite(codeAmount) ||
+  codeAmount <= 0
+) {
+  console.warn(
+    "[DrissNow] Redeemed code has no valid amount:",
+    result
+  );
 
-    /*
-     * The code was accepted, but it did not contain
-     * a usable duration.
-     *
-     * Let the normal GameManager fallback handle it.
-     */
-    console.warn(
-      "[DrissNow] Redeemed code has no valid durationSeconds:",
-      result
-    );
+  await game.setup();
 
-    await game.setup();
+} else {
 
-  } else {
+  console.log(
+    "[DrissNow] Redeemed code starting amount:",
+    codeAmount
+  );
 
-    console.log(
-      "[DrissNow] Redeemed code duration:",
-      codeDuration,
-      "seconds"
-    );
-
-    /*
-     * Start a NEW 2048 round using the duration
-     * embedded in the redeemed code.
-     *
-     * This same duration is subsequently passed through
-     * FeatureManager into the economy chart.
-     */
-    await game.startRedeemedRound(
-      codeDuration
-    );
-  }
+  await game.startRedeemedRound(
+    codeAmount
+  );
+}
+  
 }
 
             

@@ -9,90 +9,175 @@
 
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="meta/apple-touch-icon.png">
-  <link rel="apple-touch-startup-image" href="meta/apple-touch-startup-image-640x1096.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
-  <link rel="apple-touch-startup-image" href="meta/apple-touch-startup-image-640x920.png" media="(device-width: 320px) and (device-height: 480px) and (-webkit-device-pixel-ratio: 2)">
+  <link
+    rel="apple-touch-startup-image"
+    href="meta/apple-touch-startup-image-640x1096.png"
+    media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)"
+  >
+  <link
+    rel="apple-touch-startup-image"
+    href="meta/apple-touch-startup-image-640x920.png"
+    media="(device-width: 320px) and (device-height: 480px) and (-webkit-device-pixel-ratio: 2)"
+  >
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
   <meta name="HandheldFriendly" content="True">
   <meta name="MobileOptimized" content="320">
-  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0, maximum-scale=1, user-scalable=no, minimal-ui">
+
+  <meta
+    name="viewport"
+    content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0, maximum-scale=1, user-scalable=no, minimal-ui"
+  >
+
+  <style>
+    /*
+     * Restart button below the game grid.
+     */
+    .restart-container {
+      width: 100%;
+      text-align: center;
+      margin-top: 15px;
+      margin-bottom: 20px;
+    }
+
+    .restart-container .restart-button {
+      display: inline-block;
+    }
+  </style>
 </head>
 
 <body>
+
   <div class="container">
 
+    <!-- =========================================================
+         GAME HEADER
+         ========================================================= -->
+
     <div class="heading">
-      <h1 class="title">Drissnow</h1>
+
+      <h1 class="title">
+        Drissnow
+      </h1>
 
       <div class="scores-container">
-        <div class="score-container">0</div>
-        <div class="best-container">0</div>
-        <div class="credits-container">0</div>
-        <div class="timer-container">--:--</div>
+
+        <div class="score-container">
+          0
+        </div>
+
+        <div class="best-container">
+          0
+        </div>
+
+        <div class="credits-container">
+          0
+        </div>
+
+        <div class="timer-container">
+          --:--
+        </div>
+
       </div>
+
     </div>
+
+
+    <!-- =========================================================
+         AUTHENTICATION BAR
+         ========================================================= -->
 
     <div
       id="drissnow-auth-bar"
-      style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin:8px 0 12px;font-size:13px;"
+      style="
+        display:flex;
+        justify-content:flex-end;
+        align-items:center;
+        gap:8px;
+        margin:8px 0 12px;
+        font-size:13px;
+      "
     >
-      <span id="drissnow-auth-status">Checking account...</span>
+
+      <span id="drissnow-auth-status">
+        Checking account...
+      </span>
+
       <a
         id="drissnow-auth-action"
         href="signin.html"
-        style="text-decoration:none;font-weight:bold;"
-      >SIGN IN</a>
+        style="
+          text-decoration:none;
+          font-weight:bold;
+        "
+      >
+        SIGN IN
+      </a>
+
     </div>
+
+
+    <!-- =========================================================
+         GAME INTRO
+         ========================================================= -->
 
     <div class="above-game">
+
       <p class="game-intro">
-        Join the numbers and get to the <strong>2048 tile!</strong>
+        Join the numbers and get to
+        <strong>2048 tile!</strong>
       </p>
 
-      <a class="restart-button">RESTART</a>
     </div>
 
+
+    <!-- =========================================================
+         PEANUT CODE REDEMPTION
+         ========================================================= -->
+
     <div class="redeem-container">
+
       <input
         type="text"
         class="redeem-input"
         placeholder="Code from your peanut bag"
       >
 
-      <a class="redeem-button">REDEEM</a>
+      <a class="redeem-button">
+        REDEEM
+      </a>
+
     </div>
+
 
     <p class="redeem-message"></p>
 
-    <div class="timer-setup-container">
-      <label
-        for="timer-input"
-        class="timer-setup-label"
-      >
-        Round length (seconds):
-      </label>
 
-      <input
-        type="number"
-        id="timer-input"
-        class="timer-input"
-        min="1"
-        step="1"
-        placeholder="Loading..."
-      >
-    </div>
+
+    <!-- =========================================================
+         GAME CONTAINER
+         ========================================================= -->
 
     <div class="game-container">
 
+
+      <!-- GAME OVER -->
+
       <div class="game-over-banner">
+
         <p class="game-over-text">
-          Game over! Tap RESTART above to play again.
+          Game over! Tap RESTART below to play again.
         </p>
+
       </div>
 
+
+      <!-- NO CREDITS -->
+
       <div class="no-credits-overlay">
+
         <p class="no-credits-title">
           You need a credit to play
         </p>
@@ -101,157 +186,363 @@
           Buy a small (15/=) or big (40/=) bag of peanuts,
           then enter the code printed on it above.
         </p>
+
       </div>
 
+
+      <!-- PRIZE TOAST -->
+
       <div class="prize-toast">
+
         <p class="prize-toast-text"></p>
+
       </div>
+
+
+      <!-- =======================================================
+           2048 GRID
+           ======================================================= -->
 
       <div class="grid-container">
 
         <div class="grid-row">
+
           <div class="grid-cell"></div>
           <div class="grid-cell"></div>
           <div class="grid-cell"></div>
           <div class="grid-cell"></div>
+
         </div>
 
-        <div class="grid-row">
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-        </div>
 
         <div class="grid-row">
+
           <div class="grid-cell"></div>
           <div class="grid-cell"></div>
           <div class="grid-cell"></div>
           <div class="grid-cell"></div>
+
         </div>
 
+
         <div class="grid-row">
+
           <div class="grid-cell"></div>
           <div class="grid-cell"></div>
           <div class="grid-cell"></div>
           <div class="grid-cell"></div>
+
+        </div>
+
+
+        <div class="grid-row">
+
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+
         </div>
 
       </div>
+
+
+      <!-- TILE CONTAINER -->
 
       <div class="tile-container"></div>
 
     </div>
 
-    <!--
-      Feature UI host.
-      FeatureManager creates the Peanut Units economy panel
-      and economy_chart.js supplies the live chart.
-    -->
+
+    <!-- =========================================================
+         RESTART BUTTON
+         BELOW GAME GRID
+         ========================================================= -->
+
+    <div class="restart-container">
+
+      <a class="restart-button">
+        RESTART
+      </a>
+
+    </div>
+
+
+    <!-- =========================================================
+         FEATURE UI
+         ========================================================= -->
+
     <div
       id="drissnow-features"
       class="drissnow-features"
     ></div>
 
+
+    <!-- =========================================================
+         GAME INSTRUCTIONS
+         ========================================================= -->
+
     <p class="game-explanation">
-      <strong class="important">How to play:</strong>
-      Use your <strong>arrow keys</strong> to move the tiles.
+
+      <strong class="important">
+        How to play:
+      </strong>
+
+      Use your
+      <strong>arrow keys</strong>
+      to move the tiles.
+
       When two tiles with the same number touch,
       they <strong>merge into one!</strong>
+
     </p>
+
 
     <hr>
 
+
+    <!-- =========================================================
+         GAME NOTE
+         ========================================================= -->
+
     <p>
-      <strong class="important">Note:</strong>
+
+      <strong class="important">
+        Note:
+      </strong>
+
       This is the DrissNow implementation of the Game 2048.
+
       Recreated by Godwin Waswa, a medical student at Moi
       University, Eldoret, Kenya.
+
     </p>
+
 
     <hr>
 
   </div>
 
 
-<script>
-(function (window) {
-  "use strict";
+  <!-- ===========================================================
+       DRISSNOW AUTHENTICATION
+       =========================================================== -->
 
-  window.DrissnowAuth = window.DrissnowAuth || {
-    API_BASE: (window.location.protocol === "http:" || window.location.protocol === "https:")
-      ? window.location.origin + "/api/auth"
-      : "http://127.0.0.1:3000/api/auth",
-    TOKEN_KEY: "drissnowAuthToken",
-    USER_KEY: "drissnowUser",
+  <script>
 
-    getToken: function () {
-      return localStorage.getItem(this.TOKEN_KEY);
-    },
+  (function (window) {
 
-    getUser: function () {
-      try {
-        return JSON.parse(localStorage.getItem(this.USER_KEY) || "null");
-      } catch (error) {
-        return null;
-      }
-    },
+    "use strict";
 
-    isSignedIn: function () {
-      return !!(this.getToken() && this.getUser());
-    },
 
-    setSession: function (token, user) {
-      if (token) localStorage.setItem(this.TOKEN_KEY, token);
-      if (user) localStorage.setItem(this.USER_KEY, JSON.stringify(user));
-    },
+    window.DrissnowAuth =
+      window.DrissnowAuth || {
 
-    clearSession: function () {
-      localStorage.removeItem(this.TOKEN_KEY);
-      localStorage.removeItem(this.USER_KEY);
-    },
+        API_BASE:
+          (window.location.protocol === "http:" ||
+           window.location.protocol === "https:")
 
-    authHeaders: function (json) {
-      var headers = {};
-      var token = this.getToken();
-      if (json) headers["Content-Type"] = "application/json";
-      if (token) headers["Authorization"] = "Bearer " + token;
-      return headers;
-    },
+            ? window.location.origin +
+              "/api/auth"
 
-    signOut: async function () {
-      var token = this.getToken();
-      try {
-        if (token) {
-          await fetch(this.API_BASE + "/signout", {
-            method: "POST",
-            headers: this.authHeaders(false)
-          });
-        }
-      } catch (error) {
-        console.warn("Signout request failed:", error);
-      } finally {
-        this.clearSession();
-      }
-    }
-  };
+            : "http://127.0.0.1:3000/api/auth",
 
-  window.DrissnowAuth.ready = true;
-})(window);
-</script>
+
+        TOKEN_KEY:
+          "drissnowAuthToken",
+
+
+        USER_KEY:
+          "drissnowUser",
+
+
+        getToken:
+          function () {
+
+            return localStorage.getItem(
+              this.TOKEN_KEY
+            );
+
+          },
+
+
+        getUser:
+          function () {
+
+            try {
+
+              return JSON.parse(
+                localStorage.getItem(
+                  this.USER_KEY
+                ) || "null"
+              );
+
+            } catch (error) {
+
+              return null;
+
+            }
+
+          },
+
+
+        isSignedIn:
+          function () {
+
+            return !!(
+              this.getToken() &&
+              this.getUser()
+            );
+
+          },
+
+
+        setSession:
+          function (
+            token,
+            user
+          ) {
+
+            if (token) {
+
+              localStorage.setItem(
+                this.TOKEN_KEY,
+                token
+              );
+
+            }
+
+
+            if (user) {
+
+              localStorage.setItem(
+                this.USER_KEY,
+                JSON.stringify(user)
+              );
+
+            }
+
+          },
+
+
+        clearSession:
+          function () {
+
+            localStorage.removeItem(
+              this.TOKEN_KEY
+            );
+
+            localStorage.removeItem(
+              this.USER_KEY
+            );
+
+          },
+
+
+        authHeaders:
+          function (json) {
+
+            var headers = {};
+
+            var token =
+              this.getToken();
+
+
+            if (json) {
+
+              headers[
+                "Content-Type"
+              ] =
+                "application/json";
+
+            }
+
+
+            if (token) {
+
+              headers[
+                "Authorization"
+              ] =
+                "Bearer " + token;
+
+            }
+
+
+            return headers;
+
+          },
+
+
+        signOut:
+          async function () {
+
+            var token =
+              this.getToken();
+
+
+            try {
+
+              if (token) {
+
+                await fetch(
+                  this.API_BASE +
+                  "/signout",
+                  {
+                    method: "POST",
+
+                    headers:
+                      this.authHeaders(
+                        false
+                      )
+                  }
+                );
+
+              }
+
+            } catch (error) {
+
+              console.warn(
+                "Signout request failed:",
+                error
+              );
+
+            } finally {
+
+              this.clearSession();
+
+            }
+
+          }
+
+      };
+
+
+    window.DrissnowAuth.ready =
+      true;
+
+  })(window);
+
+  </script>
+
 
   <!-- =========================================================
        CORE 2048 DEPENDENCIES
        ========================================================= -->
 
   <script src="js/bind_polyfill.js"></script>
+
   <script src="js/classlist_polyfill.js"></script>
+
   <script src="js/animframe_polyfill.js"></script>
 
   <script src="js/keyboard_input_manager.js"></script>
+
   <script src="js/html_actuator.js"></script>
+
   <script src="js/grid.js"></script>
+
   <script src="js/tile.js"></script>
+
   <script src="js/local_storage_manager.js"></script>
 
 
@@ -273,13 +564,14 @@
 
   <!-- =========================================================
        LIVE PEANUT UNITS ECONOMY + CHART
+       =========================================================
 
-       This is intentionally loaded AFTER feature_manager.js.
+       economy_chart.js is loaded AFTER feature_manager.js.
 
-       feature_manager.js contains the FeatureManager itself,
-       while economy_chart.js supplies the final
-       window.DrissnowCreditEconomy implementation used when
-       FeatureManager is instantiated.
+       feature_manager.js contains FeatureManager.
+
+       economy_chart.js supplies the final
+       window.DrissnowCreditEconomy implementation.
        ========================================================= -->
 
   <script src="js/economy_chart.js"></script>
@@ -298,41 +590,109 @@
 
   <script src="js/application.js"></script>
 
+
+  <!-- =========================================================
+       AUTHENTICATION UI
+       ========================================================= -->
+
   <script>
-    (function () {
-      "use strict";
 
-      var status = document.getElementById("drissnow-auth-status");
-      var action = document.getElementById("drissnow-auth-action");
-      var auth = window.DrissnowAuth;
+  (function () {
 
-      if (!status || !action || !auth) return;
+    "use strict";
 
-      function renderAuth() {
-        var user = auth.getUser();
 
-        if (auth.isSignedIn()) {
-          status.textContent = user.email || "Signed in";
-          action.textContent = "ACCOUNT";
-          action.href = "account.html";
-        } else {
-          status.textContent = "Not signed in";
-          action.textContent = "SIGN IN";
-          action.href = "signin.html";
-        }
+    var status =
+      document.getElementById(
+        "drissnow-auth-status"
+      );
+
+
+    var action =
+      document.getElementById(
+        "drissnow-auth-action"
+      );
+
+
+    var auth =
+      window.DrissnowAuth;
+
+
+    if (
+      !status ||
+      !action ||
+      !auth
+    ) {
+
+      return;
+
+    }
+
+
+    function renderAuth() {
+
+      var user =
+        auth.getUser();
+
+
+      if (
+        auth.isSignedIn()
+      ) {
+
+        status.textContent =
+          user.email ||
+          "Signed in";
+
+
+        action.textContent =
+          "ACCOUNT";
+
+
+        action.href =
+          "account.html";
+
+      } else {
+
+        status.textContent =
+          "Not signed in";
+
+
+        action.textContent =
+          "SIGN IN";
+
+
+        action.href =
+          "signin.html";
+
       }
 
-      renderAuth();
+    }
 
-      window.addEventListener("storage", function (event) {
+
+    renderAuth();
+
+
+    window.addEventListener(
+      "storage",
+      function (event) {
+
         if (
-          event.key === auth.TOKEN_KEY ||
-          event.key === auth.USER_KEY
+          event.key ===
+            auth.TOKEN_KEY ||
+
+          event.key ===
+            auth.USER_KEY
         ) {
+
           renderAuth();
+
         }
-      });
-    })();
+
+      }
+    );
+
+  })();
+
   </script>
 
 </body>

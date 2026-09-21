@@ -23,297 +23,199 @@
       margin: 0;
     }
 
-
     .account-page {
-
       width: 100%;
-
       max-width: 500px;
-
       margin: 40px auto;
-
       padding: 20px;
-
       box-sizing: border-box;
-
     }
 
-
     .account-card {
-
       background: #faf8ef;
-
       color: #776e65;
-
       border-radius: 8px;
-
       padding: 25px;
-
       box-sizing: border-box;
-
       box-shadow:
         0 8px 25px
         rgba(0, 0, 0, 0.15);
-
     }
-
 
     .account-page-title {
-
       margin: 0 0 25px;
-
       text-align: center;
-
       font-size: 36px;
-
     }
 
+    .account-details {
+      margin-top: 5px;
+    }
 
     .account-detail {
-
       padding: 15px 0;
-
       border-bottom:
         1px solid #ddd;
-
     }
-
 
     .account-detail-label {
-
       display: block;
-
       margin-bottom: 6px;
-
       font-size: 12px;
-
       font-weight: bold;
-
       text-transform: uppercase;
-
       color: #999;
-
     }
-
 
     .account-detail-value {
-
       display: block;
-
       font-size: 16px;
-
       word-break: break-word;
-
     }
 
-
-    /*
-     * Peanut Credit balance
-     */
+    .account-detail-object {
+      margin: 8px 0 0;
+      padding: 12px;
+      background: #eee;
+      border-radius: 5px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #555;
+      box-sizing: border-box;
+    }
 
     .balance-detail {
-
       margin: 25px 0;
-
       padding: 22px;
-
       border-radius: 8px;
-
       background: #edc53f;
-
       color: #776e65;
-
       text-align: center;
-
     }
-
 
     .balance-label {
-
       display: block;
-
       font-size: 13px;
-
       font-weight: bold;
-
       text-transform: uppercase;
-
     }
-
 
     .balance-value {
-
       display: block;
-
       margin-top: 6px;
-
       font-size: 40px;
-
       line-height: 1;
-
       font-weight: bold;
-
     }
-
 
     .balance-unit {
-
       display: block;
-
       margin-top: 8px;
-
       font-size: 13px;
-
       font-weight: bold;
-
     }
 
+    .balance-source {
+      display: block;
+      margin-top: 7px;
+      font-size: 10px;
+      opacity: 0.7;
+    }
 
     .account-actions {
-
       display: flex;
-
       gap: 10px;
-
       margin-top: 25px;
-
     }
-
 
     .account-action {
-
       flex: 1;
-
       min-width: 0;
-
       padding: 12px;
-
       border: 0;
-
       border-radius: 4px;
-
       text-align: center;
-
       text-decoration: none;
-
       font-size: 13px;
-
       font-weight: bold;
-
       cursor: pointer;
-
       box-sizing: border-box;
-
     }
-
 
     .back-button {
-
       background: #8f7a66;
-
       color: #f9f6f2;
-
     }
-
 
     .signout-button {
-
       background: #bbada0;
-
       color: #fff;
-
     }
-
 
     .account-action:hover {
-
       opacity: 0.85;
-
     }
-
 
     .account-action:disabled {
-
       opacity: 0.6;
-
       cursor: wait;
-
     }
-
 
     .account-message {
-
       min-height: 20px;
-
       margin: 20px 0 0;
-
       text-align: center;
-
       font-size: 13px;
-
     }
 
+    .account-message.error {
+      color: #b33a3a;
+    }
+
+    .account-message.success {
+      color: #5b7f3a;
+    }
+
+    .account-message.loading {
+      color: #999;
+    }
 
     .loading {
-
       opacity: 0.7;
-
     }
-
-
-    /*
-     * Account loading state
-     */
 
     .account-loading {
-
       text-align: center;
-
       padding: 10px 0;
-
       color: #999;
-
       font-size: 13px;
-
     }
-
 
     @media screen and (max-width: 520px) {
 
       .account-page {
-
         margin: 20px auto;
-
         padding: 12px;
-
       }
-
 
       .account-card {
-
         padding: 20px;
-
       }
-
 
       .account-page-title {
-
         font-size: 30px;
-
       }
-
 
       .account-actions {
-
         flex-direction: column;
-
       }
 
-
       .account-action {
-
         width: 100%;
-
       }
 
     }
@@ -328,7 +230,6 @@
 
   <div class="account-page">
 
-
     <div class="account-card">
 
 
@@ -337,68 +238,23 @@
       </h1>
 
 
-      <!--
-        USER ID
-      -->
+      <div
+        id="account-details"
+        class="account-details"
+      >
 
-      <div class="account-detail">
-
-        <span class="account-detail-label">
-          Account ID
-        </span>
-
-        <span
-          id="account-id"
-          class="account-detail-value"
-        >
-          Loading...
-        </span>
+        <div class="account-loading">
+          Loading account information...
+        </div>
 
       </div>
 
 
       <!--
-        EMAIL
-      -->
+        Economy balance.
 
-      <div class="account-detail">
-
-        <span class="account-detail-label">
-          Email
-        </span>
-
-        <span
-          id="account-email"
-          class="account-detail-value"
-        >
-          Loading...
-        </span>
-
-      </div>
-
-
-      <!--
-        PLAYER ID
-      -->
-
-      <div class="account-detail">
-
-        <span class="account-detail-label">
-          Player ID
-        </span>
-
-        <span
-          id="account-player-id"
-          class="account-detail-value"
-        >
-          Loading...
-        </span>
-
-      </div>
-
-
-      <!--
-        PEANUT CREDIT BALANCE
+        The value is populated by account.js
+        from DrissnowCreditEconomy.
       -->
 
       <div class="balance-detail">
@@ -407,6 +263,7 @@
           Account Balance
         </span>
 
+
         <span
           id="account-balance"
           class="balance-value loading"
@@ -414,16 +271,18 @@
           ...
         </span>
 
+
         <span class="balance-unit">
-          PEANUT CREDITS
+          PEANUT UNITS
+        </span>
+
+
+        <span class="balance-source">
+          Live economy balance
         </span>
 
       </div>
 
-
-      <!--
-        ACTIONS
-      -->
 
       <div class="account-actions">
 
@@ -458,548 +317,20 @@
 
 
   <!--
-    --------------------------------------------------
-    DRISSNOW AUTH
-    --------------------------------------------------
+    ==================================================
+    EXTERNAL JAVASCRIPT ONLY
+    ==================================================
+
+    economy_chart.js:
+      Provides DrissnowCreditEconomy.
+
+    account.js:
+      Contains ALL account/auth/economy logic.
+    ==================================================
   -->
 
-  <script>
-
-  (function (window) {
-
-    "use strict";
-
-
-    window.DrissnowAuth =
-      window.DrissnowAuth || {
-
-
-      /*
-       * Authentication API is on port 3000.
-       */
-
-      API_BASE:
-        "http://127.0.0.1:3000/api/auth",
-
-
-      TOKEN_KEY:
-        "drissnowAuthToken",
-
-
-      USER_KEY:
-        "drissnowUser",
-
-
-      getToken:
-        function () {
-
-          return localStorage.getItem(
-            this.TOKEN_KEY
-          );
-
-        },
-
-
-      getUser:
-        function () {
-
-          try {
-
-            return JSON.parse(
-              localStorage.getItem(
-                this.USER_KEY
-              ) || "null"
-            );
-
-          } catch (error) {
-
-            return null;
-
-          }
-
-        },
-
-
-      isSignedIn:
-        function () {
-
-          return !!(
-            this.getToken() &&
-            this.getUser()
-          );
-
-        },
-
-
-      setSession:
-        function (
-          token,
-          user
-        ) {
-
-          if (token) {
-
-            localStorage.setItem(
-              this.TOKEN_KEY,
-              token
-            );
-
-          }
-
-
-          if (user) {
-
-            localStorage.setItem(
-              this.USER_KEY,
-              JSON.stringify(user)
-            );
-
-          }
-
-        },
-
-
-      clearSession:
-        function () {
-
-          localStorage.removeItem(
-            this.TOKEN_KEY
-          );
-
-          localStorage.removeItem(
-            this.USER_KEY
-          );
-
-        },
-
-
-      authHeaders:
-        function (json) {
-
-          var headers = {};
-
-          var token =
-            this.getToken();
-
-
-          if (json) {
-
-            headers[
-              "Content-Type"
-            ] =
-              "application/json";
-
-          }
-
-
-          if (token) {
-
-            headers[
-              "Authorization"
-            ] =
-              "Bearer " + token;
-
-          }
-
-
-          return headers;
-
-        },
-
-
-      signOut:
-        async function () {
-
-          var token =
-            this.getToken();
-
-
-          try {
-
-            if (token) {
-
-              await fetch(
-                this.API_BASE +
-                "/signout",
-                {
-                  method: "POST",
-
-                  headers:
-                    this.authHeaders(
-                      false
-                    )
-                }
-              );
-
-            }
-
-          } catch (error) {
-
-            console.warn(
-              "Signout request failed:",
-              error
-            );
-
-          } finally {
-
-            this.clearSession();
-
-          }
-
-        }
-
-      };
-
-
-    window.DrissnowAuth.ready =
-      true;
-
-
-  })(window);
-
-  </script>
-
-
-  <!--
-    --------------------------------------------------
-    ACCOUNT JAVASCRIPT
-    --------------------------------------------------
-  -->
-
-  <script>
-
-  (function () {
-
-    "use strict";
-
-
-    /*
-     * Authentication token.
-     */
-
-    var token =
-      window.DrissnowAuth.getToken();
-
-
-    /*
-     * Page elements.
-     */
-
-    var idElement =
-      document.getElementById(
-        "account-id"
-      );
-
-
-    var emailElement =
-      document.getElementById(
-        "account-email"
-      );
-
-
-    var playerIdElement =
-      document.getElementById(
-        "account-player-id"
-      );
-
-
-    var balanceElement =
-      document.getElementById(
-        "account-balance"
-      );
-
-
-    var messageElement =
-      document.getElementById(
-        "account-message"
-      );
-
-
-    var signoutButton =
-      document.getElementById(
-        "signout-button"
-      );
-
-
-    /*
-     * No token means the user is
-     * not authenticated.
-     */
-
-    if (!token) {
-
-      window.location.href =
-        "signin.html";
-
-      return;
-
-    }
-
-
-    /*
-     * ------------------------------------------------
-     * LOAD ACCOUNT FROM DATABASE
-     * ------------------------------------------------
-     */
-
-    async function loadAccount() {
-
-      try {
-
-        console.log(
-          "Loading account from:",
-          window.DrissnowAuth.API_BASE +
-          "/me"
-        );
-
-
-        var response =
-          await fetch(
-            window.DrissnowAuth.API_BASE +
-            "/me",
-            {
-              method: "GET",
-
-              headers: {
-
-                "Accept":
-                  "application/json",
-
-                "Authorization":
-                  "Bearer " + token
-
-              }
-            }
-          );
-
-
-        /*
-         * Read the response as text first.
-         *
-         * This makes debugging much easier if
-         * the server accidentally returns HTML.
-         */
-
-        var responseText =
-          await response.text();
-
-
-        console.log(
-          "Account HTTP status:",
-          response.status
-        );
-
-
-        console.log(
-          "Account response:",
-          responseText
-        );
-
-
-        var data;
-
-
-        try {
-
-          data =
-            JSON.parse(
-              responseText
-            );
-
-        } catch (parseError) {
-
-          console.error(
-            "Account API returned invalid JSON:",
-            responseText
-          );
-
-
-          throw new Error(
-            "Account server returned an invalid response."
-          );
-
-        }
-
-
-        /*
-         * Expired/invalid session.
-         */
-
-        if (
-          response.status === 401
-        ) {
-
-          window.DrissnowAuth
-            .clearSession();
-
-
-          window.location.href =
-            "signin.html";
-
-
-          return;
-
-        }
-
-
-        if (
-          !response.ok ||
-          !data.success
-        ) {
-
-          throw new Error(
-            data.message ||
-            "Unable to load account."
-          );
-
-        }
-
-
-        var account =
-          data.account || {};
-
-
-        /*
-         * ACCOUNT ID
-         */
-
-        idElement.textContent =
-          account.id ||
-          "Unknown";
-
-
-        /*
-         * EMAIL
-         */
-
-        emailElement.textContent =
-          account.email ||
-          "Unknown";
-
-
-        /*
-         * PLAYER ID
-         */
-
-        playerIdElement.textContent =
-          account.playerId ||
-          "Unknown";
-
-
-        /*
-         * PEANUT CREDITS
-         */
-
-        var credits =
-          Number(
-            account.credits
-          );
-
-
-        if (!isFinite(credits)) {
-
-          credits = 0;
-
-        }
-
-
-        balanceElement.classList.remove(
-          "loading"
-        );
-
-
-        balanceElement.textContent =
-          credits;
-
-
-        /*
-         * Clear error message.
-         */
-
-        messageElement.textContent =
-          "";
-
-
-      } catch (error) {
-
-        console.error(
-          "Account loading error:",
-          error
-        );
-
-
-        balanceElement.classList.remove(
-          "loading"
-        );
-
-
-        balanceElement.textContent =
-          "—";
-
-
-        messageElement.textContent =
-          error.message ||
-          "Unable to load account information.";
-
-      }
-
-    }
-
-
-    /*
-     * Load account immediately.
-     */
-
-    loadAccount();
-
-
-    /*
-     * ------------------------------------------------
-     * SIGN OUT
-     * ------------------------------------------------
-     */
-
-    signoutButton.addEventListener(
-      "click",
-      async function () {
-
-        signoutButton.disabled =
-          true;
-
-
-        signoutButton.textContent =
-          "SIGNING OUT...";
-
-
-        try {
-
-          await window.DrissnowAuth
-            .signOut();
-
-        } catch (error) {
-
-          console.error(
-            "Signout failed:",
-            error
-          );
-
-
-          window.DrissnowAuth
-            .clearSession();
-
-        }
-
-
-        window.location.href =
-          "signin.html";
-
-      }
-    );
-
-
-  })();
-
-  </script>
+  <script src="js/economy_chart.js"></script>
+  <script src="js/account.js"></script>
 
 
 </body>
