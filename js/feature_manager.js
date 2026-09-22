@@ -54,6 +54,8 @@
     this.render();
 
     this.loadServerStats();
+
+this.restoreEconomy();
   }
 
   FeatureManager.prototype.load = function() {
@@ -238,73 +240,115 @@ FeatureManager.prototype.startEconomyWhenReady =
       }
     };
 
-  FeatureManager.prototype.onGameStarted =
-    async function(
-      roundEndTime,
-      isResume,
-      durationSeconds
-    ) {
-      /*
-       * A fresh round always gets a fresh economy
-       * session. The economy is never started merely
-       * because FeatureManager was constructed.
-       */
-      if (!isResume) {
-        await this.startEconomyWhenReady(
-          roundEndTime,
-          durationSeconds,
-          false
+  FeatureManager.prototype.restoreEconomy =
+  async function() {
+    var self = this;
+
+    try {
+      var id =
+        localStorage.getItem(
+          "drissnowEconomyPlayerId"
         );
 
-        return;
+      if (!id &&
+          this.game.creditsManager &&
+          this.game.creditsManager.playerId) {
+        id =
+          this.game.creditsManager.playerId;
+      }
+
+      if (!id) {
+        console.warn(
+          "No economy player ID available for restoration."
+        );
+        return null;
+      }
+
+      localStorage.setItem(
+        "drissnowEconomyPlayerId",
+        id
+      );
+
+      if (!this.creditEconomy ||
+          !this.creditEconomy.restoreFromServer) {
+        console.warn(
+          "Economy restore method is not available."
+        );
+        return null;
+      }
+
+      return await this.creditEconomy.restoreFromServer(
+        id
+      );
+
+    } catch (error) {
+      console.error(
+        "Economy restoration error:",
+        error
+      );
+
+      return null;
+    }
+  };
+
+ FeatureManager.prototype.onGameStarted =
+  async function(
+    roundEndTime,
+    isResume,
+    durationSeconds
+  ) {
+    /*
+     * RESUMED GAME
+     *
+     * First attempt to restore the existing
+     * server-side economy session.
+     */
+    if (isResume) {
+      try {
+        if (this.creditEconomy &&
+            this.creditEconomy.resumeExistingSession) {
+
+          var restored =
+            await this.creditEconomy.resumeExistingSession(
+              roundEndTime
+            );
+
+          if (restored) {
+            return;
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Unable to resume existing economy session:",
+          error
+        );
       }
 
       /*
-       * A resumed game should not accidentally start
-       * a second economy session.
-       *
-       * If the existing economy session belongs to
-       * the currently running round, leave it running.
-       * Otherwise start a new session for safety.
+       * Only create a new session if there was
+       * genuinely no existing session to resume.
        */
-     if (
-  this.creditEconomy &&
-  this.creditEconomy.sessionId &&
-  this.creditEconomy.roundEndTime &&
-  roundEndTime
-) {
-  var difference =
-    Math.abs(
-      this.creditEconomy.roundEndTime -
-      roundEndTime
-    );
-
-  if (difference < 2000) {
-    /*
-     * The economy object survived without being recreated.
-     * Make sure its clock and graph are actually running.
-     */
-    this.creditEconomy.roundEndTime =
-      roundEndTime;
-
-    if (
-      this.creditEconomy.resumeExistingSession
-    ) {
-      await this.creditEconomy.resumeExistingSession(
-        roundEndTime
+      await this.startEconomyWhenReady(
+        roundEndTime,
+        durationSeconds,
+        true
       );
+
+      return;
     }
 
-    return;
-  }
-}
-      
-await this.startEconomyWhenReady(
-  roundEndTime,
-  durationSeconds,
-  true
-);
-    };
+    /*
+     * FRESH GAME
+     *
+     * A genuinely new round gets a new economy
+     * session.
+     */
+    await this.startEconomyWhenReady(
+      roundEndTime,
+      durationSeconds,
+      false
+    );
+  };
 
   FeatureManager.prototype.creditEconomyStart =
     function(isResume, durationSeconds) {

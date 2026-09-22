@@ -56,6 +56,7 @@
     this.countdownElement = null;
     this.scoreElement = null;
     this.finalElement = null;
+    this.currentBalanceTimer = null;
 
     /*
      * Only the database session ID is stored locally.
@@ -64,15 +65,216 @@
      * authoritative.
      */
     this.storageKey =
-      "drissnowEconomySessionId";
+  "drissnowEconomySessionId";
 
-    this.points = [];
+this.chartStorageKey =
+  "drissnowEconomyChart";
+
+this.points = [];
+
+this.serverBalance = 0;
+this.serverElapsed = 0;
+this.lastServerUpdate = 0;
 
     this.lastSnapshotSlot = -1;
 
     this.running = false;
   };
 
+
+// ============================================================
+// LOCAL GRAPH PERSISTENCE
+// ============================================================
+
+DrissnowCreditEconomy.prototype.getChartStorageKey =
+  function() {
+
+    if (!this.playerId) {
+      return null;
+    }
+
+    return (
+      this.chartStorageKey +
+      ":" +
+      String(this.playerId)
+    );
+  };
+
+
+DrissnowCreditEconomy.prototype.saveChartState =
+  function() {
+
+    var key =
+      this.getChartStorageKey();
+
+    if (!key) {
+      return;
+    }
+
+    try {
+
+      var state = {
+        sessionId:
+          this.sessionId,
+
+        startedAt:
+          this.startedAt,
+
+        roundEndTime:
+          this.roundEndTime,
+
+        durationSeconds:
+          Number(
+            this.config.durationSeconds
+          ) || 0,
+
+        points:
+          Array.isArray(this.points)
+            ? this.points
+            : [],
+
+        units:
+          Number(this.units) || 0,
+
+        serverBalance:
+          Number(this.serverBalance) || 0,
+
+        serverElapsed:
+          Number(this.serverElapsed) || 0,
+
+        savedAt:
+          Date.now()
+      };
+
+      window.localStorage.setItem(
+        key,
+        JSON.stringify(state)
+      );
+
+    } catch (error) {
+
+      console.warn(
+        "[Drissnow Economy] Unable to save chart state:",
+        error
+      );
+    }
+  };
+
+
+DrissnowCreditEconomy.prototype.loadChartState =
+  function() {
+
+    var key =
+      this.getChartStorageKey();
+
+    if (!key) {
+      return null;
+    }
+
+    try {
+
+      var raw =
+        window.localStorage.getItem(key);
+
+      if (!raw) {
+        return null;
+      }
+
+      var state =
+        JSON.parse(raw);
+
+      if (!state) {
+        return null;
+      }
+
+      /*
+       * Never restore points from a different
+       * economy session.
+       */
+      if (
+        this.sessionId &&
+        state.sessionId &&
+        String(state.sessionId) !==
+        String(this.sessionId)
+      ) {
+        return null;
+      }
+
+      if (
+        Array.isArray(state.points)
+      ) {
+
+        var restoredPoints =
+          state.points
+            .map(function(point) {
+
+              return {
+                seconds:
+                  Number(point.seconds) || 0,
+
+                amount:
+                  Number(point.amount) || 0,
+
+                compoundAmount:
+                  Number(
+                    point.compoundAmount
+                  ) || 0,
+
+                score:
+                  Number(point.score) || 0
+              };
+
+            })
+            .filter(function(point) {
+
+              return (
+                isFinite(point.seconds) &&
+                isFinite(point.amount)
+              );
+
+            });
+
+        this.points =
+          restoredPoints;
+      }
+
+      if (
+        isFinite(
+          Number(state.serverBalance)
+        )
+      ) {
+        this.serverBalance =
+          Number(state.serverBalance);
+      }
+
+      if (
+        isFinite(
+          Number(state.serverElapsed)
+        )
+      ) {
+        this.serverElapsed =
+          Number(state.serverElapsed);
+      }
+
+      this.points.sort(
+        function(a, b) {
+          return a.seconds - b.seconds;
+        }
+      );
+
+      return state;
+
+    } catch (error) {
+
+      console.warn(
+        "[Drissnow Economy] Chart state restore failed:",
+        error
+      );
+
+      return null;
+    }
+  };
+  
 
   // ============================================================
 // JSON FILE PERSISTENCE
@@ -278,6 +480,7 @@ DrissnowCreditEconomy.prototype.saveJsonState =
       );
 
       this.render();
+      this.saveChartState();
 
       return state;
 
@@ -994,6 +1197,11 @@ if (
           data,
           roundEndTime
         );
+        this.loadChartState();
+
+await this.loadPersistedSnapshots();
+
+await this.refreshCurrentBalance();
         /*
  * The server session/config is the fallback configuration.
  *
@@ -1048,6 +1256,7 @@ if (
         this.points = [];
 
         this.render();
+        this.saveChartState();
 
         return null;
       }
@@ -1097,7 +1306,13 @@ if (
           roundEndTime
         );
 
-        await this.loadPersistedSnapshots();
+        this.loadChartState();
+
+await this.loadPersistedSnapshots();
+
+await this.refreshCurrentBalance();
+
+      
 
         /*
          * If the server says the round has already ended,
@@ -1112,6 +1327,7 @@ if (
           await this.refreshFinalState();
 
           this.render();
+          this.saveChartState();
 
           return data;
         }
@@ -1119,6 +1335,7 @@ if (
         this.startLoop();
 
         this.render();
+        this.saveChartState();
 
         return data;
       } catch (error) {
@@ -1275,162 +1492,407 @@ DrissnowCreditEconomy.prototype.loadSessionResponse =
    * Load official snapshots stored in MariaDB.
    */
   DrissnowCreditEconomy.prototype.loadPersistedSnapshots =
-    async function() {
-      if (!this.sessionId) {
-        return null;
-      }
+  async function() {
 
-      try {
-        var data =
-          await this.apiRequest(
-            "/economy/snapshots",
-            "POST",
-            {
-              sessionId:
-                this.sessionId
-            }
-          );
+    if (!this.sessionId) {
+      return null;
+    }
 
-        var snapshots =
-          data &&
-          (
-            data.snapshots ||
-            (
-              data.session &&
-              data.session.snapshots
-            )
-          );
+    /*
+     * FIRST:
+     *
+     * Restore the browser cache immediately.
+     *
+     * This prevents the graph from appearing empty
+     * while the server request is running.
+     */
+    this.loadChartState();
 
-        if (
-          !Array.isArray(
-            snapshots
-          )
-        ) {
-          return data;
-        }
+    this.render();
+    this.saveChartState();
 
-        this.points = [];
+    try {
 
-        for (
-          var i = 0;
-          i < snapshots.length;
-          i++
-        ) {
-          var row =
-            snapshots[i] || {};
-
-          var seconds =
-            Number(
-              row.elapsed_seconds !==
-              undefined
-                ? row.elapsed_seconds
-                : row.elapsedSeconds
-            );
-
-          var amount =
-            Number(
-              row.amount
-            );
-
-          if (
-            !isFinite(seconds) ||
-            !isFinite(amount)
-          ) {
-            continue;
-          }
-
-          var score =
-            Number(
-              row.score !==
-              undefined
-                ? row.score
-                : 0
-            );
-
-          var compoundAmount =
-            Number(
-              row.compound_amount !==
-              undefined
-                ? row.compound_amount
-                : row.compoundAmount
-            );
-
-          if (!isFinite(score)) {
-            score = 0;
-          }
-
-          if (
-            !isFinite(
-              compoundAmount
-            )
-          ) {
-            compoundAmount =
-              Math.max(
-                0,
-                amount - score
-              );
-          }
-
-          this.points.push({
-            seconds:
-              seconds,
-
-            amount:
-              amount,
-
-            compoundAmount:
-              compoundAmount,
-
-            score:
-              score
-          });
-        }
-
-        this.points.sort(
-          function(a, b) {
-            return (
-              a.seconds -
-              b.seconds
-            );
+      var data =
+        await this.apiRequest(
+          "/economy/snapshots",
+          "POST",
+          {
+            sessionId:
+              this.sessionId
           }
         );
 
-        if (
-          this.points.length
-        ) {
-          var last =
-            this.points[
-              this.points.length - 1
-            ];
+      var snapshots =
+        data &&
+        (
+          data.snapshots ||
+          (
+            data.session &&
+            data.session.snapshots
+          )
+        );
 
-          this.lastSnapshotSlot =
-            last.seconds;
-
-         this.scoreAtLastSnapshot =
-  Math.max(
-    0,
-    (Number(last.score) || 0) / 3
-  );
-
-          this.units =
-            Number(
-              last.amount
-            ) || 0;
-        }
-
-        this.render();
+      if (
+        !Array.isArray(snapshots)
+      ) {
+        this.saveChartState();
 
         return data;
-      } catch (error) {
-        console.warn(
-          "Economy snapshots could not be loaded:",
-          error
+      }
+
+      /*
+       * DO NOT replace this.points.
+       *
+       * Merge server points with locally cached points.
+       */
+      var merged = {};
+
+      /*
+       * Existing browser points.
+       */
+      for (
+        var i = 0;
+        i < this.points.length;
+        i++
+      ) {
+
+        var localPoint =
+          this.points[i];
+
+        if (
+          localPoint &&
+          isFinite(
+            Number(localPoint.seconds)
+          )
+        ) {
+
+          merged[
+            String(
+              Number(
+                localPoint.seconds
+              )
+            )
+          ] = localPoint;
+        }
+      }
+
+      /*
+       * Official server points.
+       *
+       * Server data wins for the same timestamp.
+       */
+      for (
+        var j = 0;
+        j < snapshots.length;
+        j++
+      ) {
+
+        var row =
+          snapshots[j] || {};
+
+        var seconds =
+          Number(
+            row.elapsed_seconds !==
+            undefined
+              ? row.elapsed_seconds
+              : row.elapsedSeconds
+          );
+
+        var amount =
+          Number(
+            row.amount
+          );
+
+        if (
+          !isFinite(seconds) ||
+          !isFinite(amount)
+        ) {
+          continue;
+        }
+
+        var score =
+          Number(
+            row.score !== undefined
+              ? row.score
+              : 0
+          );
+
+        if (!isFinite(score)) {
+          score = 0;
+        }
+
+        var compoundAmount =
+          Number(
+            row.compound_amount !==
+            undefined
+              ? row.compound_amount
+              : row.compoundAmount
+          );
+
+        if (
+          !isFinite(compoundAmount)
+        ) {
+          compoundAmount =
+            Math.max(
+              0,
+              amount - score
+            );
+        }
+
+        merged[
+          String(seconds)
+        ] = {
+
+          seconds:
+            seconds,
+
+          amount:
+            amount,
+
+          compoundAmount:
+            compoundAmount,
+
+          score:
+            score
+        };
+      }
+
+      /*
+       * Convert merged object back to array.
+       */
+    var existingPoints =
+  Array.isArray(this.points)
+    ? this.points.slice()
+    : [];
+
+this.points = existingPoints;
+
+      /*
+       * Restore the latest known snapshot values.
+       */
+      if (this.points.length) {
+
+        var last =
+          this.points[
+            this.points.length - 1
+          ];
+
+        this.lastSnapshotSlot =
+          Number(last.seconds) || 0;
+
+        this.units =
+          Number(last.amount) || 0;
+
+        this.scoreAtLastSnapshot =
+          Number(last.score) || 0;
+      }
+
+      /*
+       * Save the merged result.
+       */
+      this.saveChartState();
+
+      this.render();
+      this.saveChartState();
+
+      return data;
+
+    } catch (error) {
+
+      console.warn(
+        "Economy snapshots could not be loaded:",
+        error
+      );
+
+      /*
+       * Even if MariaDB is temporarily unavailable,
+       * keep the locally persisted graph.
+       */
+      this.saveChartState();
+
+      this.render();
+      this.saveChartState();
+
+      return null;
+    }
+  };
+
+
+  DrissnowCreditEconomy.prototype.refreshCurrentBalance =
+  async function() {
+
+    if (!this.playerId) {
+      return null;
+    }
+
+    try {
+
+      var data =
+        await this.apiRequest(
+          "/economy/current",
+          "POST",
+          {}
         );
 
-        return null;
+      if (
+        !data ||
+        !data.success
+      ) {
+        return data;
       }
-    };
 
+      var balance =
+        Number(
+          data.balance !== undefined
+            ? data.balance
+            : data.amount
+        );
+
+      var elapsed =
+        Number(
+          data.elapsedSeconds
+        );
+
+      if (!isFinite(balance)) {
+        return data;
+      }
+
+      if (!isFinite(elapsed)) {
+        elapsed = 0;
+      }
+
+      this.serverBalance =
+        balance;
+
+      this.serverElapsed =
+        elapsed;
+
+      /*
+       * The server session is authoritative.
+       */
+      if (
+        data.sessionId !==
+        undefined &&
+        data.sessionId !== null
+      ) {
+
+        this.sessionId =
+          data.sessionId;
+
+        this.storeSessionId(
+          this.sessionId
+        );
+      }
+
+      /*
+       * Add/update the current server point.
+       */
+      var found = false;
+
+      for (
+        var i = 0;
+        i < this.points.length;
+        i++
+      ) {
+
+        if (
+          Math.abs(
+            Number(
+              this.points[i].seconds
+            ) -
+            elapsed
+          ) < 0.001
+        ) {
+
+          this.points[i] = {
+
+            seconds:
+              elapsed,
+
+            amount:
+              balance,
+
+            compoundAmount:
+              Math.max(
+                0,
+                balance -
+                this.scoreAtLastSnapshot
+              ),
+
+            score:
+              this.scoreAtLastSnapshot
+          };
+
+          found = true;
+
+          break;
+        }
+      }
+
+      if (!found) {
+
+        this.points.push({
+
+          seconds:
+            elapsed,
+
+          amount:
+            balance,
+
+          compoundAmount:
+            Math.max(
+              0,
+              balance -
+              this.scoreAtLastSnapshot
+            ),
+
+          score:
+            this.scoreAtLastSnapshot
+        });
+      }
+
+      this.points.sort(
+        function(a, b) {
+          return (
+            a.seconds -
+            b.seconds
+          );
+        }
+      );
+
+      this.units =
+        balance;
+
+      this.lastServerUpdate =
+        Date.now();
+
+      this.saveChartState();
+
+      this.render();
+      this.saveChartState();
+
+      return data;
+
+    } catch (error) {
+
+      console.warn(
+        "[Drissnow Economy] Current balance refresh failed:",
+        error
+      );
+
+      /*
+       * Do not destroy the graph when the
+       * current-balance request fails.
+       */
+      this.loadChartState();
+
+      this.render();
+      this.saveChartState();
+
+      return null;
+    }
+  };
 
 
   /*
@@ -1489,6 +1951,11 @@ DrissnowCreditEconomy.prototype.resumeExistingSession =
           sessionData,
           roundEndTime
         );
+        this.loadChartState();
+
+await this.loadPersistedSnapshots();
+
+await this.refreshCurrentBalance();
       }
 
       /*
@@ -1518,12 +1985,14 @@ DrissnowCreditEconomy.prototype.resumeExistingSession =
 
       if (elapsed >= duration) {
         this.render();
+        this.saveChartState();
         return sessionData;
       }
 
       this.startLoop();
 
       this.render();
+      this.saveChartState();
 
       return sessionData;
 
@@ -1561,11 +2030,19 @@ DrissnowCreditEconomy.prototype.resumeExistingSession =
           var elapsed =
             self.elapsed();
 
-          self.units =
-            self.amount(
-              elapsed
-            ) +
-            self.scoreAtLastSnapshot;
+          if (
+  self.serverBalance > 0 &&
+  self.serverElapsed >= elapsed - 1
+) {
+  self.units =
+    self.serverBalance;
+} else {
+  self.units =
+    self.amount(
+      elapsed
+    ) +
+    self.scoreAtLastSnapshot;
+}
 
           self.render();
 
@@ -1631,11 +2108,19 @@ DrissnowCreditEconomy.prototype.resumeExistingSession =
               var elapsed =
                 self.elapsed();
 
-              self.units =
-                self.amount(
-                  elapsed
-                ) +
-                self.scoreAtLastSnapshot;
+              if (
+  self.serverBalance > 0 &&
+  self.serverElapsed >= elapsed - 1
+) {
+  self.units =
+    self.serverBalance;
+} else {
+  self.units =
+    self.amount(
+      elapsed
+    ) +
+    self.scoreAtLastSnapshot;
+}
 
               self.render();
 
@@ -1727,6 +2212,20 @@ DrissnowCreditEconomy.prototype.resumeExistingSession =
           },
           interval * 1000
         );
+
+      this.currentBalanceTimer =
+  setInterval(
+    function() {
+
+      if (!self.running) {
+        return;
+      }
+
+      self.refreshCurrentBalance();
+
+    },
+    1000
+  );
     };
 
   /*
@@ -1760,19 +2259,30 @@ DrissnowCreditEconomy.prototype.resumeExistingSession =
    * Stop all economy loops.
    */
   DrissnowCreditEconomy.prototype.stopLoops =
-    function() {
-      this.running = false;
+  function() {
 
-      this.stopAnimation();
+    this.running = false;
 
-      if (this.snapshotTimer) {
-        clearInterval(
-          this.snapshotTimer
-        );
+    this.stopAnimation();
 
-        this.snapshotTimer = null;
-      }
-    };
+    if (this.snapshotTimer) {
+
+      clearInterval(
+        this.snapshotTimer
+      );
+
+      this.snapshotTimer = null;
+    }
+
+    if (this.currentBalanceTimer) {
+
+      clearInterval(
+        this.currentBalanceTimer
+      );
+
+      this.currentBalanceTimer = null;
+    }
+  };
 
   /*
    * Add a local chart point at the configured database interval.
@@ -1836,6 +2346,7 @@ DrissnowCreditEconomy.prototype.resumeExistingSession =
           this.scoreAtLastSnapshot;
 
         this.render();
+        this.saveChartState();
 
         return;
       }
@@ -1886,6 +2397,7 @@ this.scoreAtLastSnapshot =
       );
 
       this.render();
+      this.saveChartState();
     };
 
   /*
@@ -1938,7 +2450,7 @@ this.scoreAtLastSnapshot =
           this.scoreAtLastSnapshot =
             Math.max(
               0,
-              serverScore
+              serverScore / 3
             );
 
           var serverAmount =
@@ -2039,6 +2551,7 @@ this.scoreAtLastSnapshot =
           }
 
           this.render();
+          this.saveChartState();
         }
 
         return data;
@@ -2051,6 +2564,268 @@ this.scoreAtLastSnapshot =
         return null;
       }
     };
+
+  DrissnowCreditEconomy.prototype.restoreFromServer =
+  async function(playerId) {
+
+    this.playerId =
+      playerId || this.playerId;
+
+    if (!this.playerId) {
+      console.error(
+        "[Economy] Cannot restore: playerId missing"
+      );
+
+      return null;
+    }
+
+    try {
+
+      console.log(
+        "[Economy] Restoring economy directly from server..."
+      );
+
+      /*
+       * 1. Ask the server for the CURRENT session.
+       *
+       * This does not depend on localStorage.
+       */
+      var current =
+        await this.apiRequest(
+          "/economy/current",
+          "POST",
+          {}
+        );
+
+      if (
+        !current ||
+        !current.success ||
+        !current.sessionId
+      ) {
+
+        console.warn(
+          "[Economy] No active economy session found."
+        );
+
+        return null;
+      }
+
+      /*
+       * 2. Restore session identity.
+       */
+      this.sessionId =
+        Number(
+          current.sessionId
+        );
+
+      this.storeSessionId(
+        this.sessionId
+      );
+
+      /*
+       * 3. Restore configuration.
+       */
+      this.applyConfig({
+        initialBalance:
+          current.baseBalance,
+
+        interestRate:
+          current.interestRate,
+
+        compoundSeconds:
+          current.compoundSeconds,
+
+        plotIntervalSeconds:
+          current.plotIntervalSeconds,
+
+        durationSeconds:
+          current.durationSeconds
+      });
+
+      /*
+       * 4. Restore exact server start time.
+       */
+      if (current.startedAt) {
+
+        this.startedAt =
+          new Date(
+            current.startedAt
+          ).getTime();
+      }
+
+      /*
+       * 5. Restore round end.
+       */
+      this.roundEndTime =
+        this.startedAt +
+        Number(
+          current.durationSeconds
+        ) *
+        1000;
+
+      /*
+       * 6. Load ALL historical graph points.
+       */
+      await this.loadPersistedSnapshots();
+
+      /*
+       * 7. Add the exact current server point.
+       */
+      this.serverBalance =
+        Number(
+          current.balance
+        );
+
+      this.serverElapsed =
+        Number(
+          current.elapsedSeconds
+        ) || 0;
+
+      this.units =
+        this.serverBalance;
+
+      /*
+       * 8. Make sure the current point is visible.
+       */
+      this.addServerPoint(
+        this.serverElapsed,
+        this.serverBalance
+      );
+
+      /*
+       * 9. Save the restored graph locally too.
+       */
+      this.saveChartState();
+
+      this.render();
+
+      /*
+       * 10. Continue live updates.
+       */
+      if (
+        current.status === "active"
+      ) {
+        this.startLoop();
+      }
+
+      console.log(
+        "[Economy] Graph restored:",
+        {
+          sessionId:
+            this.sessionId,
+
+          points:
+            this.points.length,
+
+          elapsed:
+            this.serverElapsed,
+
+          balance:
+            this.serverBalance
+        }
+      );
+
+      return current;
+
+    } catch (error) {
+
+      console.error(
+        "[Economy] Server graph restoration failed:",
+        error
+      );
+
+      /*
+       * Do NOT erase the graph.
+       */
+      this.loadChartState();
+
+      this.render();
+
+      return null;
+    }
+  };
+
+  DrissnowCreditEconomy.prototype.addServerPoint =
+  function(seconds, balance) {
+
+    seconds =
+      Number(seconds);
+
+    balance =
+      Number(balance);
+
+    if (
+      !isFinite(seconds) ||
+      !isFinite(balance)
+    ) {
+      return;
+    }
+
+    var replaced =
+      false;
+
+    for (
+      var i = 0;
+      i < this.points.length;
+      i++
+    ) {
+
+      if (
+        Math.abs(
+          Number(
+            this.points[i].seconds
+          ) -
+          seconds
+        ) < 0.001
+      ) {
+
+        this.points[i] = {
+          seconds:
+            seconds,
+
+          amount:
+            balance,
+
+          compoundAmount:
+            balance,
+
+          score:
+            0
+        };
+
+        replaced = true;
+
+        break;
+      }
+    }
+
+    if (!replaced) {
+
+      this.points.push({
+
+        seconds:
+          seconds,
+
+        amount:
+          balance,
+
+        compoundAmount:
+          balance,
+
+        score:
+          0
+      });
+    }
+
+    this.points.sort(
+      function(a, b) {
+        return (
+          a.seconds -
+          b.seconds
+        );
+      }
+    );
+  };
 
   /*
    * Refresh final session state from the server.
@@ -2108,6 +2883,7 @@ this.scoreAtLastSnapshot =
         }
 
         this.render();
+        this.saveChartState();
 
         return data;
       } catch (error) {
@@ -2269,6 +3045,7 @@ this.scoreAtLastSnapshot =
             }
 
             this.render();
+            this.saveChartState();
 
             this.clearStoredSessionId();
 
@@ -2292,6 +3069,7 @@ this.scoreAtLastSnapshot =
       }
 
       this.render();
+      this.saveChartState();
 
       return {
         success: true,
@@ -2896,10 +3674,14 @@ this.scoreAtLastSnapshot =
           );
 
         var currentAmount =
-          this.amount(
-            currentSeconds
-          ) +
-          this.currentScore();
+  this.serverBalance > 0
+    ? this.serverBalance
+    : (
+        this.amount(
+          currentSeconds
+        ) +
+        this.scoreAtLastSnapshot
+      );
 
         
 
@@ -2936,6 +3718,288 @@ this.scoreAtLastSnapshot =
       ctx.restore();
     };
 
+  DrissnowCreditEconomy.prototype.addServerPoint =
+  function(seconds, balance) {
+
+    seconds =
+      Number(seconds);
+
+    balance =
+      Number(balance);
+
+    if (!isFinite(seconds) ||
+        !isFinite(balance)) {
+      return;
+    }
+
+    var replaced = false;
+
+    for (
+      var i = 0;
+      i < this.points.length;
+      i += 1
+    ) {
+
+      var existingSeconds =
+        Number(
+          this.points[i].seconds
+        );
+
+      if (
+        Math.abs(
+          existingSeconds - seconds
+        ) < 0.001
+      ) {
+
+        this.points[i] = {
+          seconds: seconds,
+          amount: balance,
+          compoundAmount: balance,
+          score: 0
+        };
+
+        replaced = true;
+        break;
+      }
+    }
+
+    if (!replaced) {
+
+      this.points.push({
+        seconds: seconds,
+        amount: balance,
+        compoundAmount: balance,
+        score: 0
+      });
+    }
+
+    this.points.sort(
+      function(a, b) {
+        return (
+          Number(a.seconds || 0) -
+          Number(b.seconds || 0)
+        );
+      }
+    );
+  };
+
+
+  DrissnowCreditEconomy.prototype.restoreFromServer =
+  async function(playerId) {
+
+    this.playerId =
+      playerId || this.playerId;
+
+    if (!this.playerId) {
+      return null;
+    }
+
+    try {
+
+      /*
+       * Ask the server for the latest economy
+       * session belonging to this player.
+       */
+      var current =
+        await this.apiRequest(
+          "/economy/current",
+          "POST",
+          {}
+        );
+
+      if (!current ||
+          current.success !== true ||
+          !current.sessionId) {
+
+        return null;
+      }
+
+      this.sessionId =
+        Number(current.sessionId);
+
+      this.storeSessionId(
+        this.sessionId
+      );
+
+      /*
+       * Restore economy configuration.
+       */
+      this.applyConfig({
+        initialBalance:
+          current.baseBalance,
+
+        interestRate:
+          current.interestRate,
+
+        compoundSeconds:
+          current.compoundSeconds,
+
+        plotIntervalSeconds:
+          current.plotIntervalSeconds,
+
+        durationSeconds:
+          current.durationSeconds
+      });
+
+      /*
+       * Restore server start time.
+       */
+      if (current.startedAt) {
+        this.startedAt =
+          new Date(
+            current.startedAt
+          ).getTime();
+      }
+
+      /*
+       * Reconstruct round end time.
+       */
+      this.roundEndTime =
+        this.startedAt +
+        Number(
+          current.durationSeconds || 0
+        ) * 1000;
+
+      /*
+       * Reconstruct historical graph points
+       * from the database.
+       */
+      await this.loadPersistedSnapshots();
+
+      /*
+       * Add the current server balance as
+       * the newest point.
+       */
+      var serverElapsed =
+        Number(
+          current.elapsedSeconds
+        ) || 0;
+
+      var serverBalance =
+        Number(
+          current.balance
+        );
+
+      if (isFinite(serverBalance)) {
+
+        this.serverBalance =
+          serverBalance;
+
+        this.serverElapsed =
+          serverElapsed;
+
+        this.units =
+          serverBalance;
+
+        this.addServerPoint(
+          serverElapsed,
+          serverBalance
+        );
+      }
+
+      /*
+       * Persist the reconstructed graph locally
+       * as a secondary cache.
+       */
+      if (this.saveChartState) {
+        this.saveChartState();
+      }
+
+      this.render();
+
+      /*
+       * Continue the live graph if the server
+       * session is still active.
+       */
+      if (current.status === "active") {
+        this.startLoop();
+      }
+
+      return current;
+
+    } catch (error) {
+
+      console.error(
+        "Unable to restore economy from server:",
+        error
+      );
+
+      /*
+       * Local cache is only a fallback.
+       */
+      if (this.loadChartState) {
+        this.loadChartState();
+        this.render();
+      }
+
+      return null;
+    }
+  };
+
+  DrissnowCreditEconomy.prototype.addServerPoint =
+  function(seconds, balance) {
+
+    seconds =
+      Number(seconds);
+
+    balance =
+      Number(balance);
+
+    if (!isFinite(seconds) ||
+        !isFinite(balance)) {
+      return;
+    }
+
+    var replaced = false;
+
+    for (
+      var i = 0;
+      i < this.points.length;
+      i += 1
+    ) {
+
+      var existingSeconds =
+        Number(
+          this.points[i].seconds
+        );
+
+      if (
+        Math.abs(
+          existingSeconds - seconds
+        ) < 0.001
+      ) {
+
+        this.points[i] = {
+          seconds: seconds,
+          amount: balance,
+          compoundAmount: balance,
+          score: 0
+        };
+
+        replaced = true;
+        break;
+      }
+    }
+
+    if (!replaced) {
+
+      this.points.push({
+        seconds: seconds,
+        amount: balance,
+        compoundAmount: balance,
+        score: 0
+      });
+    }
+
+    this.points.sort(
+      function(a, b) {
+        return (
+          Number(a.seconds || 0) -
+          Number(b.seconds || 0)
+        );
+      }
+    );
+  };
   /*
    * Expose the economy module globally for the classic
    * browser-script architecture.
